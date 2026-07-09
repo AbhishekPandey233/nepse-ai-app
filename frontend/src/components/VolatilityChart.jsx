@@ -2,15 +2,17 @@ import { Line } from "react-chartjs-2";
 
 import { getVolatility } from "../api/client.js";
 import { useTickerData } from "../hooks/useTickerData.js";
+import ErrorRetry from "./ErrorRetry.jsx";
+import LoadingSkeleton from "./LoadingSkeleton.jsx";
 
 export default function VolatilityChart({ ticker }) {
-  const { data, loading, error } = useTickerData(getVolatility, ticker);
+  const { data, loading, error, retry } = useTickerData(getVolatility, ticker);
 
   if (loading) {
     return (
       <div className="card">
         <h2>Volatility (GARCH 1,1)</h2>
-        <p>Fitting GARCH model...</p>
+        <LoadingSkeleton />
       </div>
     );
   }
@@ -19,7 +21,7 @@ export default function VolatilityChart({ ticker }) {
     return (
       <div className="card">
         <h2>Volatility (GARCH 1,1)</h2>
-        <p className="error">{error}</p>
+        <ErrorRetry message={error} onRetry={retry} />
       </div>
     );
   }
