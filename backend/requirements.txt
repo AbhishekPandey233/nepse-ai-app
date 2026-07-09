@@ -10,3 +10,4 @@ statsmodels
 arch
 xgboost
 scikit-learn
+tensorflow
