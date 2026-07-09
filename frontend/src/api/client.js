@@ -27,4 +27,19 @@ export async function getEfficiency(ticker) {
   return data;
 }
 
+export async function getVolatility(ticker) {
+  const { data } = await client.get("/api/volatility", { params: { ticker } });
+  return data;
+}
+
+export async function getPrediction(ticker) {
+  const { data } = await client.get("/api/predict", { params: { ticker } });
+  return data;
+}
+
+export async function getExplanation(ticker) {
+  const { data } = await client.get("/api/explain", { params: { ticker } });
+  return data;
+}
+
 export default client;
