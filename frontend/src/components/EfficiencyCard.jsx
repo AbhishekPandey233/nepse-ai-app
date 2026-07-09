@@ -1,14 +1,16 @@
 import { getEfficiency } from "../api/client.js";
 import { useTickerData } from "../hooks/useTickerData.js";
+import ErrorRetry from "./ErrorRetry.jsx";
+import LoadingSkeleton from "./LoadingSkeleton.jsx";
 
 export default function EfficiencyCard({ ticker }) {
-  const { data, loading, error } = useTickerData(getEfficiency, ticker);
+  const { data, loading, error, retry } = useTickerData(getEfficiency, ticker);
 
   if (loading) {
     return (
       <div className="card">
         <h2>Market Efficiency</h2>
-        <p>Loading efficiency analysis...</p>
+        <LoadingSkeleton />
       </div>
     );
   }
@@ -17,7 +19,7 @@ export default function EfficiencyCard({ ticker }) {
     return (
       <div className="card">
         <h2>Market Efficiency</h2>
-        <p className="error">{error}</p>
+        <ErrorRetry message={error} onRetry={retry} />
       </div>
     );
   }
