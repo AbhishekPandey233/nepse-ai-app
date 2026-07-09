@@ -27,7 +27,7 @@ export default function Login() {
   }
 
   return (
-    <div>
+    <div className="login-page">
       <h1>{mode === "login" ? "Log in" : "Register"}</h1>
       <form onSubmit={handleSubmit}>
         <input
