@@ -1,0 +1,35 @@
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 480px;
+  margin: 4rem auto;
+  padding: 0 1rem;
+  color: #1a1a1a;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+input, select, button {
+  font-size: 1rem;
+  padding: 0.5rem;
+}
+
+button {
+  cursor: pointer;
+}
+
+.error {
+  color: #c0392b;
+}
+
+.toggle-link {
+  background: none;
+  border: none;
+  color: #2563eb;
+  text-decoration: underline;
+  padding: 0;
+  align-self: flex-start;
+}
