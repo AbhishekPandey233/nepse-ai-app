@@ -42,4 +42,9 @@ export async function getExplanation(ticker) {
   return data;
 }
 
+export async function explainChat(ticker, question = null) {
+  const { data } = await client.post("/api/explain-chat", { ticker, question });
+  return data;
+}
+
 export default client;
