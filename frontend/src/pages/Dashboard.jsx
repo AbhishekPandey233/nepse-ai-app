@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 
+import ChatWidget from "../components/ChatWidget.jsx";
 import EfficiencyCard from "../components/EfficiencyCard.jsx";
 import ExplainabilityChart from "../components/ExplainabilityChart.jsx";
 import PredictionChart from "../components/PredictionChart.jsx";
@@ -43,6 +44,8 @@ export default function Dashboard() {
           <ExplainabilityChart ticker={activeTicker} />
         </div>
       )}
+
+      <ChatWidget ticker={activeTicker} />
     </div>
   );
 }
