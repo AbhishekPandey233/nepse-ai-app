@@ -2,15 +2,17 @@ import { Bar } from "react-chartjs-2";
 
 import { getExplanation } from "../api/client.js";
 import { useTickerData } from "../hooks/useTickerData.js";
+import ErrorRetry from "./ErrorRetry.jsx";
+import LoadingSkeleton from "./LoadingSkeleton.jsx";
 
 export default function ExplainabilityChart({ ticker }) {
-  const { data, loading, error } = useTickerData(getExplanation, ticker);
+  const { data, loading, error, retry } = useTickerData(getExplanation, ticker);
 
   if (loading) {
     return (
       <div className="card">
         <h2>Top Feature Importance (SHAP)</h2>
-        <p>Computing SHAP values...</p>
+        <LoadingSkeleton />
       </div>
     );
   }
@@ -19,7 +21,7 @@ export default function ExplainabilityChart({ ticker }) {
     return (
       <div className="card">
         <h2>Top Feature Importance (SHAP)</h2>
-        <p className="error">{error}</p>
+        <ErrorRetry message={error} onRetry={retry} />
       </div>
     );
   }
