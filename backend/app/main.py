@@ -4,11 +4,17 @@ from fastapi import FastAPI
 
 from app.core.config import settings
 from app.core.db import client
+from app.routers import efficiency, explainability, prediction, volatility
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("nepse-ai")
 
 app = FastAPI()
+
+app.include_router(efficiency.router)
+app.include_router(volatility.router)
+app.include_router(prediction.router)
+app.include_router(explainability.router)
 
 
 @app.on_event("startup")
