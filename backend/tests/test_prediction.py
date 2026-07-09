@@ -33,9 +33,9 @@ def test_train_xgboost_real_symbol():
 
 def test_build_sequences_shape():
     df = load_symbol("nabil")
-    from app.ml.prediction import _with_target
+    from app.ml.prediction import with_target
 
-    data = _with_target(df)
+    data = with_target(df)
     lookback = 10
     X, y, dates = build_sequences(data, lookback=lookback)
 
