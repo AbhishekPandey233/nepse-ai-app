@@ -3,3 +3,7 @@ uvicorn
 motor
 pydantic-settings
 python-dotenv
+pandas
+numpy
+pyarrow
+statsmodels
