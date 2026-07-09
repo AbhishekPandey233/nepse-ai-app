@@ -29,11 +29,13 @@ frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
 
+
 # Data & ML Model Exclusions (NEPSE Datasets)
 backend/data/raw/*
 !backend/data/raw/.gitkeep
 backend/data/processed/*
 !backend/data/processed/.gitkeep
+backend/requirements.txt
 
 # Binary & Data file signatures
 *.csv
