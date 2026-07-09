@@ -3,16 +3,18 @@ import { Line } from "react-chartjs-2";
 
 import { getPrediction } from "../api/client.js";
 import { useTickerData } from "../hooks/useTickerData.js";
+import ErrorRetry from "./ErrorRetry.jsx";
+import LoadingSkeleton from "./LoadingSkeleton.jsx";
 
 export default function PredictionChart({ ticker }) {
-  const { data, loading, error } = useTickerData(getPrediction, ticker);
+  const { data, loading, error, retry } = useTickerData(getPrediction, ticker);
   const [model, setModel] = useState("xgboost");
 
   if (loading) {
     return (
       <div className="card">
         <h2>Next-Day Return Prediction</h2>
-        <p>Training prediction model...</p>
+        <LoadingSkeleton />
       </div>
     );
   }
@@ -21,7 +23,7 @@ export default function PredictionChart({ ticker }) {
     return (
       <div className="card">
         <h2>Next-Day Return Prediction</h2>
-        <p className="error">{error}</p>
+        <ErrorRetry message={error} onRetry={retry} />
       </div>
     );
   }
