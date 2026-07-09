@@ -12,3 +12,4 @@ xgboost
 scikit-learn
 tensorflow
 shap
+httpx
