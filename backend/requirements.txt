@@ -11,3 +11,4 @@ arch
 xgboost
 scikit-learn
 tensorflow
+shap
