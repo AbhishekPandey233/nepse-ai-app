@@ -4,6 +4,7 @@ export function useTickerData(fetchFn, ticker) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (!ticker) return;
@@ -27,7 +28,9 @@ export function useTickerData(fetchFn, ticker) {
     return () => {
       cancelled = true;
     };
-  }, [fetchFn, ticker]);
+  }, [fetchFn, ticker, retryCount]);
 
-  return { data, loading, error };
+  const retry = () => setRetryCount((n) => n + 1);
+
+  return { data, loading, error, retry };
 }
