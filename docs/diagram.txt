@@ -1,0 +1,21 @@
+NEPSE CSV dataset
+        │
+        ▼
+Backend API (FastAPI + MongoDB)
+        │
+        ▼
+┌─────────────────────────────────────────────┐
+│              ML engine (Python)             │
+│                                             │
+│  Efficiency testing      Volatility modeling│
+│  (ADF, autocorrelation)  (GARCH(1,1))       │
+│                                             │
+│  Price prediction        Explainability     │
+│  (XGBoost + LSTM)        (SHAP values)      │
+│                                             │
+│              LLM explainer layer            │
+│         (turns JSON results → plain text)   │
+└─────────────────────────────────────────────┘
+        │
+        ▼
+Frontend (React + Chart.js dashboard + chat widget)
