@@ -8,14 +8,14 @@ from xgboost import XGBRegressor
 NON_FEATURE_COLS = ("date", "symbol", "close", "target")
 
 
-def _with_target(df: pd.DataFrame) -> pd.DataFrame:
+def with_target(df: pd.DataFrame) -> pd.DataFrame:
     """Add the next-day log_return target column and drop the trailing NaN row."""
     data = df.copy()
     data["target"] = data["log_return"].shift(-1)
     return data.iloc[:-1].reset_index(drop=True)
 
 
-def _feature_cols(data: pd.DataFrame) -> list:
+def feature_cols(data: pd.DataFrame) -> list:
     return [c for c in data.columns if c not in NON_FEATURE_COLS and pd.api.types.is_numeric_dtype(data[c])]
 
 
@@ -29,14 +29,14 @@ def _metrics(actual, predictions) -> dict:
 
 
 def train_xgboost(df: pd.DataFrame) -> dict:
-    data = _with_target(df)
-    feature_cols = _feature_cols(data)
+    data = with_target(df)
+    cols = feature_cols(data)
 
     split_idx = int(len(data) * 0.8)
     train, test = data.iloc[:split_idx], data.iloc[split_idx:]
 
-    X_train, y_train = train[feature_cols], train["target"]
-    X_test, y_test = test[feature_cols], test["target"]
+    X_train, y_train = train[cols], train["target"]
+    X_test, y_test = test[cols], test["target"]
 
     model = XGBRegressor(objective="reg:squarederror", random_state=42)
     model.fit(X_train, y_train)
@@ -53,13 +53,13 @@ def train_xgboost(df: pd.DataFrame) -> dict:
 
 
 def build_sequences(data: pd.DataFrame, lookback: int = 10) -> tuple:
-    """Slide a `lookback`-day window over `data` (output of _with_target) into a 3D
+    """Slide a `lookback`-day window over `data` (output of with_target) into a 3D
     (samples, timesteps, features) array. Each window of rows [i-lookback+1 .. i]
     predicts the target sitting on row i (next-day log_return as of that day)."""
-    feature_cols = _feature_cols(data)
+    cols = feature_cols(data)
     # ponytail: some raw columns (conf, ltp, close_ltp...) are legitimately blank in the source
     # CSVs on some days; XGBoost handles NaN natively but the LSTM can't, so impute here only.
-    feature_df = data[feature_cols].ffill().bfill().fillna(0)
+    feature_df = data[cols].ffill().bfill().fillna(0)
     features = feature_df.to_numpy(dtype=float)
     targets = data["target"].to_numpy(dtype=float)
     dates = data["date"].reset_index(drop=True)
@@ -77,7 +77,7 @@ def train_lstm(df: pd.DataFrame, lookback: int = 10) -> dict:
     from tensorflow.keras.layers import LSTM, Dense
     from tensorflow.keras.models import Sequential
 
-    data = _with_target(df)
+    data = with_target(df)
     split_idx = int(len(data) * 0.8)  # same split point/proportion as train_xgboost
     train_df = data.iloc[:split_idx].reset_index(drop=True)
     test_df = data.iloc[split_idx:].reset_index(drop=True)
