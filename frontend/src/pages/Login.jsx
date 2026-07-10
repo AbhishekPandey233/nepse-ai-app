@@ -27,38 +27,40 @@ export default function Login() {
   }
 
   return (
-    <div className="login-page">
-      <h1>{mode === "login" ? "Log in" : "Register"}</h1>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        {error && <p className="error">{error}</p>}
-        <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? "Please wait..." : mode === "login" ? "Log in" : "Register"}
+    <div className="login-screen">
+      <div className="login-page">
+        <h1>{mode === "login" ? "Log in" : "Register"}</h1>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          {error && <p className="error">{error}</p>}
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? "Please wait..." : mode === "login" ? "Log in" : "Register"}
+          </button>
+        </form>
+        <button
+          type="button"
+          className="toggle-link"
+          onClick={() => {
+            setError("");
+            setMode(mode === "login" ? "register" : "login");
+          }}
+        >
+          {mode === "login" ? "Need an account? Register" : "Already have an account? Log in"}
         </button>
-      </form>
-      <button
-        type="button"
-        className="toggle-link"
-        onClick={() => {
-          setError("");
-          setMode(mode === "login" ? "register" : "login");
-        }}
-      >
-        {mode === "login" ? "Need an account? Register" : "Already have an account? Log in"}
-      </button>
+      </div>
     </div>
   );
 }
