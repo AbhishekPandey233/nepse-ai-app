@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Bar } from "react-chartjs-2";
 
 import { explainChat, getExplanation, getPrediction } from "../api/client.js";
+import ChatWidget from "../components/ChatWidget.jsx";
 import ErrorRetry from "../components/ErrorRetry.jsx";
 import ExplainabilityChart from "../components/ExplainabilityChart.jsx";
 import LoadingSkeleton from "../components/LoadingSkeleton.jsx";
@@ -173,6 +174,8 @@ export default function ExplainabilityPage() {
           </div>
         </>
       )}
+
+      <ChatWidget ticker={ticker} />
     </div>
   );
 }
