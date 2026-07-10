@@ -1,9 +1,11 @@
-"""POST /api/register, POST /api/login."""
-from fastapi import APIRouter, HTTPException, status
+"""POST /api/register, POST /api/login, GET /api/me."""
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 
 from app.core.db import get_database
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import create_access_token, get_current_user, hash_password, verify_password
 from app.models.user import User
 
 router = APIRouter()
@@ -17,6 +19,11 @@ class AuthRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class MeResponse(BaseModel):
+    email: EmailStr
+    created_at: datetime
 
 
 @router.post("/api/register", response_model=TokenResponse)
@@ -47,3 +54,14 @@ async def login(payload: AuthRequest):
 
     token = create_access_token({"sub": user["email"]})
     return TokenResponse(access_token=token)
+
+
+@router.get("/api/me", response_model=MeResponse)
+async def get_me(current_user: dict = Depends(get_current_user)):
+    users = get_database()["users"]
+    user = await users.find_one({"email": current_user["email"]})
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return MeResponse(email=user["email"], created_at=user["created_at"])
