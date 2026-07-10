@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Line } from "react-chartjs-2";
 
 import { explainChat, getPrediction } from "../api/client.js";
+import ChatWidget from "../components/ChatWidget.jsx";
 import ErrorRetry from "../components/ErrorRetry.jsx";
 import LoadingSkeleton from "../components/LoadingSkeleton.jsx";
 import { TICKERS } from "../constants/tickers.js";
@@ -213,6 +214,8 @@ export default function PredictionExplorer() {
           </div>
         </>
       )}
+
+      <ChatWidget ticker={ticker} />
     </div>
   );
 }
