@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import ChatWidget from "../components/ChatWidget.jsx";
 import EfficiencyCard from "../components/EfficiencyCard.jsx";
@@ -11,10 +11,6 @@ import { TICKERS } from "../constants/tickers.js";
 export default function Dashboard() {
   const [ticker, setTicker] = useState(TICKERS[0]);
   const [activeTicker, setActiveTicker] = useState("");
-
-  if (!localStorage.getItem("token")) {
-    return <Navigate to="/login" replace />;
-  }
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -32,7 +28,9 @@ export default function Dashboard() {
             </option>
           ))}
         </select>
-        <button type="submit">Run analysis</button>
+        <button type="submit" className="btn-primary">
+          Run analysis
+        </button>
       </form>
 
       {activeTicker && (
@@ -41,6 +39,8 @@ export default function Dashboard() {
             <Link to={`/prediction?ticker=${activeTicker}`}>View detailed prediction explorer &rarr;</Link>
             {" · "}
             <Link to={`/volatility?ticker=${activeTicker}`}>View volatility &amp; risk &rarr;</Link>
+            {" · "}
+            <Link to={`/explainability?ticker=${activeTicker}`}>View model explainability &rarr;</Link>
           </p>
           <div className="chart-grid">
             <EfficiencyCard ticker={activeTicker} />
