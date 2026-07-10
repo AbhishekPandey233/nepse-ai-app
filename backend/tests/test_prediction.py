@@ -28,6 +28,10 @@ def test_train_xgboost_real_symbol():
 
     assert hasattr(result["model"], "predict"), "must return the trained model itself"
 
+    forecast = result["next_day_forecast"]
+    assert forecast["as_of_date"] == df["date"].iloc[-1].strftime("%Y-%m-%d")
+    assert isinstance(forecast["predicted_return"], float)
+
     print("test_train_xgboost_real_symbol passed:", metrics)
 
 
