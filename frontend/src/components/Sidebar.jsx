@@ -6,6 +6,7 @@ const LINKS = [
   { to: "/prediction", label: "Prediction" },
   { to: "/volatility", label: "Volatility" },
   { to: "/explainability", label: "Explainability" },
+  { to: "/profile", label: "Profile" },
 ];
 
 export default function Sidebar() {
