@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 
 import ChatWidget from "../components/ChatWidget.jsx";
 import EfficiencyCard from "../components/EfficiencyCard.jsx";
 import ExplainabilityChart from "../components/ExplainabilityChart.jsx";
 import PredictionChart from "../components/PredictionChart.jsx";
 import VolatilityChart from "../components/VolatilityChart.jsx";
-
-const TICKERS = ["NABIL", "ADBL", "AHPC", "API", "AKPL"];
+import { TICKERS } from "../constants/tickers.js";
 
 export default function Dashboard() {
   const [ticker, setTicker] = useState(TICKERS[0]);
@@ -37,12 +36,17 @@ export default function Dashboard() {
       </form>
 
       {activeTicker && (
-        <div className="chart-grid">
-          <EfficiencyCard ticker={activeTicker} />
-          <VolatilityChart ticker={activeTicker} />
-          <PredictionChart ticker={activeTicker} />
-          <ExplainabilityChart ticker={activeTicker} />
-        </div>
+        <>
+          <p>
+            <Link to={`/prediction?ticker=${activeTicker}`}>View detailed prediction explorer &rarr;</Link>
+          </p>
+          <div className="chart-grid">
+            <EfficiencyCard ticker={activeTicker} />
+            <VolatilityChart ticker={activeTicker} />
+            <PredictionChart ticker={activeTicker} />
+            <ExplainabilityChart ticker={activeTicker} />
+          </div>
+        </>
       )}
 
       <ChatWidget ticker={activeTicker} />
