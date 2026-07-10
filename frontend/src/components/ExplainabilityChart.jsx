@@ -2,6 +2,7 @@ import { Bar } from "react-chartjs-2";
 
 import { getExplanation } from "../api/client.js";
 import { useTickerData } from "../hooks/useTickerData.js";
+import { themeColor } from "../theme.js";
 import ErrorRetry from "./ErrorRetry.jsx";
 import LoadingSkeleton from "./LoadingSkeleton.jsx";
 
@@ -36,13 +37,13 @@ export default function ExplainabilityChart({ ticker }) {
       {
         label: "Mean |SHAP value|",
         data: top10.map((f) => f.mean_abs_shap),
-        backgroundColor: "#2563eb",
+        backgroundColor: themeColor("--chart-cyan"),
       },
     ],
   };
 
   return (
-    <div className="card">
+    <div className="card chart-fade-in">
       <h2>Top Feature Importance (SHAP)</h2>
       <Bar data={chartData} options={{ indexAxis: "y", responsive: true, plugins: { legend: { display: false } } }} />
     </div>
