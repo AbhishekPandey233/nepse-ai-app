@@ -2,6 +2,7 @@ import { Line } from "react-chartjs-2";
 
 import { getVolatility } from "../api/client.js";
 import { useTickerData } from "../hooks/useTickerData.js";
+import { themeColor } from "../theme.js";
 import ErrorRetry from "./ErrorRetry.jsx";
 import LoadingSkeleton from "./LoadingSkeleton.jsx";
 
@@ -44,13 +45,13 @@ export default function VolatilityChart({ ticker }) {
       {
         label: "Conditional volatility",
         data: historical,
-        borderColor: "#2563eb",
+        borderColor: themeColor("--chart-cyan"),
         pointRadius: 0,
       },
       {
         label: "Forecast",
         data: forecastLine,
-        borderColor: "#f59e0b",
+        borderColor: themeColor("--chart-violet"),
         borderDash: [6, 6],
         pointRadius: 0,
       },
@@ -58,7 +59,7 @@ export default function VolatilityChart({ ticker }) {
   };
 
   return (
-    <div className="card">
+    <div className="card chart-fade-in">
       <h2>Volatility (GARCH 1,1)</h2>
       <Line data={chartData} options={{ responsive: true, animation: false }} />
     </div>
