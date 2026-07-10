@@ -3,6 +3,7 @@ import { Line } from "react-chartjs-2";
 
 import { getPrediction } from "../api/client.js";
 import { useTickerData } from "../hooks/useTickerData.js";
+import { resolveModels } from "../utils/predictionModels.js";
 import ErrorRetry from "./ErrorRetry.jsx";
 import LoadingSkeleton from "./LoadingSkeleton.jsx";
 
@@ -30,10 +31,7 @@ export default function PredictionChart({ ticker }) {
 
   if (!data) return null;
 
-  // API currently returns a flat XGBoost result; support a future {xgboost, lstm} shape too.
-  const xgboost = data.xgboost ?? (data.predictions ? data : null);
-  const lstm = data.lstm ?? null;
-  const hasBoth = Boolean(xgboost && lstm);
+  const { xgboost, lstm, hasBoth } = resolveModels(data);
   const active = model === "lstm" && lstm ? lstm : xgboost;
 
   if (!active) {
