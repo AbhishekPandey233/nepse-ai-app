@@ -45,7 +45,7 @@ export default function Login() {
           required
         />
         {error && <p className="error">{error}</p>}
-        <button type="submit" disabled={loading}>
+        <button type="submit" className="btn-primary" disabled={loading}>
           {loading ? "Please wait..." : mode === "login" ? "Log in" : "Register"}
         </button>
       </form>
