@@ -39,6 +39,8 @@ export default function Dashboard() {
         <>
           <p>
             <Link to={`/prediction?ticker=${activeTicker}`}>View detailed prediction explorer &rarr;</Link>
+            {" · "}
+            <Link to={`/volatility?ticker=${activeTicker}`}>View volatility &amp; risk &rarr;</Link>
           </p>
           <div className="chart-grid">
             <EfficiencyCard ticker={activeTicker} />
