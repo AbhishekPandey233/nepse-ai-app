@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Line } from "react-chartjs-2";
 
 import { explainChat, getPrediction } from "../api/client.js";
@@ -7,6 +7,7 @@ import ErrorRetry from "../components/ErrorRetry.jsx";
 import LoadingSkeleton from "../components/LoadingSkeleton.jsx";
 import { TICKERS } from "../constants/tickers.js";
 import { useTickerData } from "../hooks/useTickerData.js";
+import { themeColor } from "../theme.js";
 import { resolveModels } from "../utils/predictionModels.js";
 
 function findNearestDate(dates, target) {
@@ -61,11 +62,6 @@ export default function PredictionExplorer() {
     setNarrative({ loading: false, error: "", answer: "" });
   }, [ticker, selectedDate]);
 
-  // hooks must run unconditionally above this line -- only the JSX return is conditional
-  if (!localStorage.getItem("token")) {
-    return <Navigate to="/login" replace />;
-  }
-
   function handleDateChange(e) {
     if (dates.length === 0) return;
     setSelectedDate(findNearestDate(dates, e.target.value));
@@ -94,16 +90,16 @@ export default function PredictionExplorer() {
       {
         label: "Actual",
         data: active.actual,
-        borderColor: "#16a34a",
+        borderColor: themeColor("--chart-cyan"),
         pointRadius: dates.map((_, i) => (i === selectedIndex ? 6 : 0)),
-        pointBackgroundColor: "#16a34a",
+        pointBackgroundColor: themeColor("--chart-cyan"),
       },
       {
         label: "Predicted",
         data: active.predictions,
-        borderColor: "#dc2626",
+        borderColor: themeColor("--chart-violet"),
         pointRadius: dates.map((_, i) => (i === selectedIndex ? 6 : 0)),
-        pointBackgroundColor: "#dc2626",
+        pointBackgroundColor: themeColor("--chart-violet"),
       },
     ],
   };
@@ -179,7 +175,7 @@ export default function PredictionExplorer() {
             </div>
           )}
 
-          <div className="card">
+          <div className="card chart-fade-in">
             <Line data={chartData} options={chartOptions} />
           </div>
 
@@ -209,7 +205,7 @@ export default function PredictionExplorer() {
 
           <div className="card narrative-panel">
             <h2>Why did the model predict this?</h2>
-            <button type="button" onClick={handleExplain} disabled={narrative.loading || !selectedDate}>
+            <button type="button" className="btn-primary" onClick={handleExplain} disabled={narrative.loading || !selectedDate}>
               {narrative.loading ? "Thinking..." : `Explain the prediction for ${selectedDate}`}
             </button>
             {narrative.error && <p className="error">{narrative.error}</p>}
