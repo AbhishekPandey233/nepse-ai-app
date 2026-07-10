@@ -43,12 +43,21 @@ def train_xgboost(df: pd.DataFrame) -> dict:
 
     predictions = model.predict(X_test)
 
+    # the row with_target() dropped (most recent day, target unknown) is exactly what a
+    # genuine forward-looking forecast needs to be computed from
+    last_row = df.iloc[[-1]][cols]
+    next_day_return = float(model.predict(last_row)[0])
+
     return {
         "model": model,
         "predictions": predictions.tolist(),
         "actual": y_test.tolist(),
         "dates": [d.strftime("%Y-%m-%d") for d in test["date"]],
         "metrics": _metrics(y_test, predictions),
+        "next_day_forecast": {
+            "as_of_date": df["date"].iloc[-1].strftime("%Y-%m-%d"),
+            "predicted_return": next_day_return,
+        },
     }
 
 
