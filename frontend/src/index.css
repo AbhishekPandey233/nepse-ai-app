@@ -216,6 +216,81 @@ button {
   margin: 0;
 }
 
+.explorer-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.hint {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.stat-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.stat-explain {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.forecast-card {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.forecast-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0.25rem 0;
+}
+
+.forecast-up {
+  color: #166534;
+}
+
+.forecast-down {
+  color: #991b1b;
+}
+
+.narrative-panel {
+  margin-top: 1.5rem;
+}
+
+.narrative-answer {
+  margin-top: 0.75rem;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
 @media (max-width: 640px) {
   body {
     margin: 1rem auto;
@@ -226,6 +301,10 @@ button {
   }
 
   .dashboard form {
+    flex-wrap: wrap;
+  }
+
+  .explorer-controls {
     flex-wrap: wrap;
   }
 
