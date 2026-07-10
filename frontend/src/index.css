@@ -418,45 +418,70 @@ button:disabled {
 }
 
 /* ==========================================================================
-   Chat widget
+   Chat widget -- docked full-height side panel (Copilot-style), overlaying
+   the content area but never covering the sidebar (it docks to the right,
+   sidebar is fixed to the left, so the two can never overlap)
    ========================================================================== */
 .chat-toggle {
   position: fixed;
   bottom: 1.5rem;
   right: 1.5rem;
-  border-radius: 999px;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 50%;
   background: var(--accent-cyan);
   color: var(--accent-cyan-ink);
   border: none;
-  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   box-shadow: 0 0 16px rgba(34, 211, 238, 0.4);
-  z-index: 15;
+  z-index: 25;
+}
+
+.chat-toggle svg {
+  width: 24px;
+  height: 24px;
 }
 
 .chat-panel {
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  width: 320px;
-  height: 420px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(380px, 100vw);
   background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  border-left: 1px solid var(--border-subtle);
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  z-index: 15;
+  z-index: 25;
+  animation: chat-panel-slide-in var(--transition-base);
+}
+
+@keyframes chat-panel-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .chat-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.6rem 0.75rem;
+  padding: var(--space-3);
   background: var(--bg-surface-raised);
+  border-bottom: 1px solid var(--border-subtle);
   color: var(--text-primary);
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .chat-header button {
@@ -509,8 +534,9 @@ button:disabled {
 
 .chat-input-row {
   flex-direction: row;
+  flex-shrink: 0;
   border-top: 1px solid var(--border-subtle);
-  padding: 0.5rem;
+  padding: var(--space-2);
   gap: var(--space-1);
 }
 
@@ -735,14 +761,6 @@ button:disabled {
 
   .explorer-controls {
     flex-wrap: wrap;
-  }
-
-  .chat-panel {
-    width: auto;
-    left: 1rem;
-    right: 1rem;
-    bottom: 1rem;
-    height: 60vh;
   }
 
   .chat-toggle {
