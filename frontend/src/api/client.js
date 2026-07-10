@@ -47,4 +47,9 @@ export async function explainChat(ticker, question = null) {
   return data;
 }
 
+export async function getMe() {
+  const { data } = await client.get("/api/me");
+  return data;
+}
+
 export default client;

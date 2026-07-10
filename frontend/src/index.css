@@ -174,13 +174,23 @@ button:disabled {
 /* ==========================================================================
    Auth (Login) -- outside Layout, no sidebar, still dark-themed via body
    ========================================================================== */
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+}
+
 .login-page {
+  width: 100%;
   max-width: 380px;
-  margin: 3.5rem auto;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
   padding: var(--space-4);
+  box-shadow: 0 0 40px rgba(34, 211, 238, 0.08), 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: modal-pop-in var(--transition-slow);
 }
 
 /* ==========================================================================
@@ -638,6 +648,77 @@ button:disabled {
   margin: 0.15rem 0 0;
   color: var(--text-secondary);
   font-size: 0.9rem;
+}
+
+/* ==========================================================================
+   Profile page
+   ========================================================================== */
+.profile-field {
+  margin-bottom: var(--space-3);
+}
+
+/* ==========================================================================
+   Confirm modal
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 7, 15, 0.72);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  animation: chart-fade-in var(--transition-base);
+}
+
+.modal-dialog {
+  width: min(380px, calc(100vw - 2rem));
+  margin-bottom: 0;
+  padding: var(--space-4);
+  text-align: center;
+  box-shadow: 0 0 40px rgba(34, 211, 238, 0.18), 0 20px 60px rgba(0, 0, 0, 0.6);
+  animation: modal-pop-in var(--transition-base);
+}
+
+.modal-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--space-3);
+  border-radius: 50%;
+  background: rgba(34, 211, 238, 0.12);
+  color: var(--accent-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.modal-dialog p {
+  margin: 0 0 var(--space-4);
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+.modal-dialog .button-group {
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+.modal-dialog .button-group button {
+  flex: 1;
+}
+
+@keyframes modal-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 /* ==========================================================================
