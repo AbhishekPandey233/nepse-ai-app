@@ -30,6 +30,17 @@ def test_fit_garch_real_symbol():
     assert result["dates"][0] == returns.index[0].strftime("%Y-%m-%d")
     assert isinstance(result["model_summary"], str) and "GARCH" in result["model_summary"]
 
+    # regression guard for the x100 GARCH-fitting scale: historical and forecast volatility
+    # must be the same order of magnitude (both in original fractional-return units) and the
+    # forecast must continue smoothly from the last historical value, not jump ~100x
+    last_historical = result["conditional_volatility"][-1]
+    first_forecast = result["forecast"][0]
+    assert last_historical < 1, "conditional_volatility looks unscaled (still x100)"
+    assert 0.1 < first_forecast / last_historical < 10, (
+        f"forecast ({first_forecast}) should be close in magnitude to the last historical "
+        f"value ({last_historical}), not off by a factor of ~100"
+    )
+
     print("test_fit_garch_real_symbol passed")
 
 
