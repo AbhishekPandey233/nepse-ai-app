@@ -5,7 +5,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBRegressor
 
-NON_FEATURE_COLS = ("date", "symbol", "close", "target")
+NON_FEATURE_COLS = ("date", "symbol", "close", "target", "s_no")
 
 
 def with_target(df: pd.DataFrame) -> pd.DataFrame:
@@ -21,10 +21,19 @@ def feature_cols(data: pd.DataFrame) -> list:
 
 def _metrics(actual, predictions) -> dict:
     actual, predictions = np.asarray(actual), np.asarray(predictions)
+
+    # flat/no-change days (actual == 0, common in thinly-traded NEPSE stocks) have no real
+    # direction to predict -- np.sign(0) == 0 can never match a nonzero prediction, which
+    # silently counted every flat day as wrong and deflated the metric. Exclude them.
+    nonzero = actual != 0
+    directional_accuracy = (
+        float((np.sign(predictions[nonzero]) == np.sign(actual[nonzero])).mean() * 100) if nonzero.any() else 0.0
+    )
+
     return {
         "rmse": float(np.sqrt(mean_squared_error(actual, predictions))),
         "mae": float(mean_absolute_error(actual, predictions)),
-        "directional_accuracy": float((np.sign(predictions) == np.sign(actual)).mean() * 100),
+        "directional_accuracy": directional_accuracy,
     }
 
 
