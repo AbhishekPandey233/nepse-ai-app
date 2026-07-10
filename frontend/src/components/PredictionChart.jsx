@@ -3,6 +3,7 @@ import { Line } from "react-chartjs-2";
 
 import { getPrediction } from "../api/client.js";
 import { useTickerData } from "../hooks/useTickerData.js";
+import { themeColor } from "../theme.js";
 import { resolveModels } from "../utils/predictionModels.js";
 import ErrorRetry from "./ErrorRetry.jsx";
 import LoadingSkeleton from "./LoadingSkeleton.jsx";
@@ -46,13 +47,13 @@ export default function PredictionChart({ ticker }) {
   const chartData = {
     labels: active.dates,
     datasets: [
-      { label: "Actual", data: active.actual, borderColor: "#16a34a", pointRadius: 0 },
-      { label: "Predicted", data: active.predictions, borderColor: "#dc2626", pointRadius: 0 },
+      { label: "Actual", data: active.actual, borderColor: themeColor("--chart-cyan"), pointRadius: 0 },
+      { label: "Predicted", data: active.predictions, borderColor: themeColor("--chart-violet"), pointRadius: 0 },
     ],
   };
 
   return (
-    <div className="card">
+    <div className="card chart-fade-in">
       <h2>Next-Day Return Prediction</h2>
       {hasBoth && (
         <div className="button-group">
