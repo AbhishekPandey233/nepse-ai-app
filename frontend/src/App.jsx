@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import ExplainabilityPage from "./pages/ExplainabilityPage.jsx";
 import Login from "./pages/Login.jsx";
 import PredictionExplorer from "./pages/PredictionExplorer.jsx";
+import ProfilePage from "./pages/ProfilePage.jsx";
 import VolatilityPage from "./pages/VolatilityPage.jsx";
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/prediction" element={<PredictionExplorer />} />
           <Route path="/volatility" element={<VolatilityPage />} />
           <Route path="/explainability" element={<ExplainabilityPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
