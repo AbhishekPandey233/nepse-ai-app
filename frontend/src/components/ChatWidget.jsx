@@ -85,7 +85,7 @@ export default function ChatWidget({ ticker }) {
           onChange={(e) => setQuestion(e.target.value)}
           disabled={loading}
         />
-        <button type="submit" disabled={loading || !question.trim()}>
+        <button type="submit" className="btn-primary" disabled={loading || !question.trim()}>
           Send
         </button>
       </form>
