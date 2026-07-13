@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Bar } from "react-chartjs-2";
+import { Bar, Line } from "react-chartjs-2";
 
-import { explainChat, getExplanation, getPrediction } from "../api/client.js";
+import { explainChat, getExplanation, getHistory, getPrediction } from "../api/client.js";
 import ChatWidget from "../components/ChatWidget.jsx";
 import ErrorRetry from "../components/ErrorRetry.jsx";
 import ExplainabilityChart from "../components/ExplainabilityChart.jsx";
@@ -10,6 +10,7 @@ import LoadingSkeleton from "../components/LoadingSkeleton.jsx";
 import { TICKERS } from "../constants/tickers.js";
 import { useTickerData } from "../hooks/useTickerData.js";
 import { themeColor } from "../theme.js";
+import { buildPriceHistoryChartData, buildTrendSummary } from "../utils/historyNarrative.js";
 
 // hard-coded since the feature set is fixed (data_loader.py's engineered + raw columns)
 const FEATURE_GLOSSARY = {
@@ -53,6 +54,7 @@ export default function ExplainabilityPage() {
   const [ticker, setTicker] = useState(searchParams.get("ticker") || TICKERS[0]);
   const predictResult = useTickerData(getPrediction, ticker); // only used to label the most recent date
   const { data, loading, error, retry } = useTickerData(getExplanation, ticker);
+  const historyResult = useTickerData(getHistory, ticker);
   const [narrative, setNarrative] = useState({ loading: false, error: "", answer: "" });
 
   async function handleExplain() {
@@ -105,6 +107,25 @@ export default function ExplainabilityPage() {
     }
   }
 
+  let priceHistoryChartData = null;
+  let trendSummary = null;
+
+  if (historyResult.data) {
+    const { dates, close, summary } = historyResult.data;
+    priceHistoryChartData = buildPriceHistoryChartData(
+      { dates, close },
+      summary,
+      {
+        cyan: themeColor("--chart-cyan"),
+        good: themeColor("--chart-good"),
+        critical: themeColor("--chart-critical"),
+      }
+    );
+    trendSummary = buildTrendSummary(ticker, summary);
+  }
+
+  const priceHistoryOptions = { responsive: true, animation: false };
+
   const waterfallOptions = {
     indexAxis: "y",
     responsive: true,
@@ -127,6 +148,39 @@ export default function ExplainabilityPage() {
           ))}
         </select>
       </div>
+
+      {historyResult.loading && (
+        <div className="card">
+          <LoadingSkeleton />
+        </div>
+      )}
+
+      {historyResult.error && (
+        <div className="card">
+          <ErrorRetry message={historyResult.error} onRetry={historyResult.retry} />
+        </div>
+      )}
+
+      {!historyResult.loading && !historyResult.error && priceHistoryChartData && trendSummary && (
+        <div className="card summary-panel chart-fade-in">
+          <h2>Historical trend &amp; outliers</h2>
+          <p className="hint">
+            Price history with the highest/lowest closes and largest single-day moves highlighted (green = high/gain,
+            red = low/loss). Hover a point for the exact date and price.
+          </p>
+          <Line data={priceHistoryChartData} options={priceHistoryOptions} />
+          <ul className="summary-bullets">
+            {trendSummary.bullets.map((bullet, i) => (
+              <li key={i}>{bullet}</li>
+            ))}
+          </ul>
+          <div className="summary-narrative">
+            {trendSummary.paragraphs.map((paragraph, i) => (
+              <p key={i}>{paragraph}</p>
+            ))}
+          </div>
+        </div>
+      )}
 
       {loading && (
         <div className="card">

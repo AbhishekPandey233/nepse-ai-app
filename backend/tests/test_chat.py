@@ -40,7 +40,28 @@ from fastapi.testclient import TestClient  # noqa: E402
 from app.main import app  # noqa: E402
 from app.routers import chat as chat_module  # noqa: E402
 from app.ml.llm_explainer import OllamaUnavailableError  # noqa: E402
+from app.routers.chat import _with_explicit_current_volatility  # noqa: E402
 from app.utils.cache import build_cache_key  # noqa: E402
+
+
+def test_with_explicit_current_volatility_injects_matching_value():
+    results = {"volatility": {"conditional_volatility": [0.01, 0.011, 0.012, 0.0126]}}
+    enriched = _with_explicit_current_volatility(results)
+
+    # must be the exact last element of the same array VolatilityPage.jsx reads for its
+    # "Current Risk Level" box -- not some independently recomputed or differently-sourced value
+    assert enriched["current_conditional_volatility_garch"] == 0.0126
+    assert enriched["volatility"]["conditional_volatility"] == results["volatility"]["conditional_volatility"]
+    print("test_with_explicit_current_volatility_injects_matching_value passed")
+
+
+def test_with_explicit_current_volatility_noop_without_volatility_data():
+    results = {"efficiency": {"verdict": "..."}}
+    enriched = _with_explicit_current_volatility(results)
+
+    assert "current_conditional_volatility_garch" not in enriched
+    assert enriched == results
+    print("test_with_explicit_current_volatility_noop_without_volatility_data passed")
 
 
 def test_404_when_nothing_cached():
@@ -105,6 +126,8 @@ def test_happy_path_merges_cached_results_and_answers():
 
 
 if __name__ == "__main__":
+    test_with_explicit_current_volatility_injects_matching_value()
+    test_with_explicit_current_volatility_noop_without_volatility_data()
     test_404_when_nothing_cached()
     test_503_when_ollama_unreachable()
     test_happy_path_merges_cached_results_and_answers()

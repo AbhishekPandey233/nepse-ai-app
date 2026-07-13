@@ -13,3 +13,21 @@ export function percentileRank(value, values) {
   const belowOrEqual = values.filter((v) => v <= value).length;
   return (belowOrEqual / values.length) * 100;
 }
+
+// collapse a boolean mask into contiguous {start, end} date ranges
+export function contiguousRanges(dates, mask) {
+  const ranges = [];
+  let start = null;
+  for (let i = 0; i < mask.length; i++) {
+    if (mask[i] && start === null) {
+      start = i;
+    } else if (!mask[i] && start !== null) {
+      ranges.push({ start: dates[start], end: dates[i - 1] });
+      start = null;
+    }
+  }
+  if (start !== null) {
+    ranges.push({ start: dates[start], end: dates[mask.length - 1] });
+  }
+  return ranges;
+}

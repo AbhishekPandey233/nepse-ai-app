@@ -36,7 +36,7 @@ cache_module.get_database = lambda: _fake_db  # cache.py bound its own name at i
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app.main import app  # noqa: E402
-from app.routers import efficiency, explainability, prediction, volatility  # noqa: E402
+from app.routers import efficiency, explainability, history, prediction, volatility  # noqa: E402
 
 
 def _count_calls(module):
@@ -58,6 +58,7 @@ def test_routes_compute_once_then_serve_from_cache():
             (volatility, "/api/volatility"),
             (prediction, "/api/predict"),
             (explainability, "/api/explain"),
+            (history, "/api/history"),
         ]:
             calls = _count_calls(module)
 

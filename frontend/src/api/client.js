@@ -42,6 +42,11 @@ export async function getExplanation(ticker) {
   return data;
 }
 
+export async function getHistory(ticker) {
+  const { data } = await client.get("/api/history", { params: { ticker } });
+  return data;
+}
+
 export async function explainChat(ticker, question = null) {
   const { data } = await client.post("/api/explain-chat", { ticker, question });
   return data;

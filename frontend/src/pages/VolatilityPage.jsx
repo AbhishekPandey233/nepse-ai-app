@@ -2,14 +2,15 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Line } from "react-chartjs-2";
 
-import { explainChat, getVolatility } from "../api/client.js";
+import { getVolatility } from "../api/client.js";
 import ChatWidget from "../components/ChatWidget.jsx";
 import ErrorRetry from "../components/ErrorRetry.jsx";
 import LoadingSkeleton from "../components/LoadingSkeleton.jsx";
 import { TICKERS } from "../constants/tickers.js";
 import { useTickerData } from "../hooks/useTickerData.js";
 import { themeColor } from "../theme.js";
-import { percentileRank, quantile } from "../utils/stats.js";
+import { buildVolatilityExplanation } from "../utils/historyNarrative.js";
+import { contiguousRanges, percentileRank, quantile } from "../utils/stats.js";
 
 const HIGH_VOL_QUANTILE = 0.8;
 
@@ -17,26 +18,9 @@ export default function VolatilityPage() {
   const [searchParams] = useSearchParams();
   const [ticker, setTicker] = useState(searchParams.get("ticker") || TICKERS[0]);
   const { data, loading, error, retry } = useTickerData(getVolatility, ticker);
-  const [narrative, setNarrative] = useState({ loading: false, error: "", answer: "" });
-
-  async function handleExplain() {
-    setNarrative({ loading: true, error: "", answer: "" });
-    try {
-      const question = `Explain what the current volatility level means for an investor holding ${ticker}, in practical terms`;
-      const result = await explainChat(ticker, question);
-      setNarrative({ loading: false, error: "", answer: result.answer });
-    } catch (err) {
-      const message =
-        err.response?.status === 404
-          ? "Run an analysis for this ticker first."
-          : err.response?.data?.detail || "Something went wrong. Please try again.";
-      setNarrative({ loading: false, error: message, answer: "" });
-    }
-  }
 
   function handleTickerChange(e) {
     setTicker(e.target.value);
-    setNarrative({ loading: false, error: "", answer: "" });
   }
 
   let chartData = null;
@@ -44,6 +28,7 @@ export default function VolatilityPage() {
   let currentValue = null;
   let topPercent = null;
   let threshold = null;
+  let explanation = null;
 
   if (data) {
     const history = data.conditional_volatility;
@@ -51,6 +36,19 @@ export default function VolatilityPage() {
     threshold = quantile(sorted, HIGH_VOL_QUANTILE);
     currentValue = history[history.length - 1];
     topPercent = Math.round(100 - percentileRank(currentValue, history));
+
+    // same array + same threshold already used for the chart's point highlighting, so the
+    // "why" text below always agrees with what's actually drawn
+    const highVolMask = history.map((v) => v > threshold);
+    const highVolatilityPeriods = contiguousRanges(data.dates, highVolMask);
+
+    explanation = buildVolatilityExplanation(ticker, {
+      currentValue,
+      topPercent,
+      threshold,
+      params: data.params,
+      highVolatilityPeriods,
+    });
 
     const forecastLabels = data.forecast.map((_, i) => `+${i + 1}d`);
     const labels = [...data.dates, ...forecastLabels];
@@ -150,14 +148,21 @@ export default function VolatilityPage() {
             <Line data={chartData} options={chartOptions} />
           </div>
 
-          <div className="card narrative-panel">
-            <h2>What does this mean for me?</h2>
-            <button type="button" className="btn-primary" onClick={handleExplain} disabled={narrative.loading}>
-              {narrative.loading ? "Thinking..." : "Explain current risk level"}
-            </button>
-            {narrative.error && <p className="error">{narrative.error}</p>}
-            {narrative.answer && <p className="narrative-answer">{narrative.answer}</p>}
-          </div>
+          {explanation && (
+            <div className="card summary-panel">
+              <h2>Why is {ticker} volatile?</h2>
+              <ul className="summary-bullets">
+                {explanation.bullets.map((bullet, i) => (
+                  <li key={i}>{bullet}</li>
+                ))}
+              </ul>
+              <div className="summary-narrative">
+                {explanation.paragraphs.map((paragraph, i) => (
+                  <p key={i}>{paragraph}</p>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
 

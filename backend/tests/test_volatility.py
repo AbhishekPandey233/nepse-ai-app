@@ -41,7 +41,13 @@ def test_fit_garch_real_symbol():
         f"value ({last_historical}), not off by a factor of ~100"
     )
 
-    print("test_fit_garch_real_symbol passed")
+    params = result["params"]
+    for key in ("omega", "alpha[1]", "beta[1]"):
+        assert key in params, f"missing GARCH param {key}"
+    assert params["alpha[1]"] >= 0 and params["beta[1]"] >= 0, "GARCH alpha/beta must be non-negative"
+    assert params["alpha[1]"] + params["beta[1]"] < 1.5, "alpha+beta wildly outside a plausible range"
+
+    print("test_fit_garch_real_symbol passed. params:", params)
 
 
 if __name__ == "__main__":
