@@ -26,6 +26,9 @@ def _trim_long_arrays(obj, max_items: int = 6):
 PROMPT_RULES = (
     "You are a financial analyst. Rules:\n"
     "- Use only the numbers above. Never invent numbers.\n"
+    "- If a field named current_conditional_volatility_garch is present, that IS the current/"
+    "latest volatility level. Always use it when asked about current volatility -- never a "
+    "per-day feature column like volatility_20 found elsewhere in the data.\n"
     "- Max 4-6 sentences, plain English, no jargon.\n"
     "- If the question is specific, answer it directly. No preamble, no restating the question, "
     "no disclaimers about being an AI.\n"
