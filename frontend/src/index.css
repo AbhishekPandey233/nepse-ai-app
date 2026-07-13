@@ -657,6 +657,33 @@ button:disabled {
   color: var(--text-primary);
 }
 
+.summary-panel {
+  margin-bottom: var(--space-4);
+}
+
+.summary-bullets {
+  margin: 0 0 var(--space-3);
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.summary-bullets li {
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.summary-narrative p {
+  margin: 0 0 var(--space-2);
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.summary-narrative p:last-child {
+  margin-bottom: 0;
+}
+
 .glossary {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
