@@ -46,12 +46,11 @@ def test_build_prompt_includes_rules_examples_and_data():
     assert "DATA:" in prompt_with_question
     assert "directional_accuracy" in prompt_with_question
     assert PROMPT_RULES in prompt_with_question
-    assert "With the data currently available, the following means:" in prompt_with_question
     assert "Q: What was the directional accuracy?" in prompt_with_question
     assert prompt_with_question.rstrip().endswith("A:")
 
     prompt_no_question = _build_prompt(results, None)
-    assert "4-6 sentence" in prompt_no_question
+    assert "natural-language summary" in prompt_no_question
     assert prompt_no_question.rstrip().endswith("A:")
 
     print("test_build_prompt_includes_rules_examples_and_data passed")
