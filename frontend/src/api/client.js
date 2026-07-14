@@ -52,6 +52,11 @@ export async function explainChat(ticker, question = null) {
   return data;
 }
 
+export async function getDetailedFactors(ticker) {
+  const { data } = await client.get("/api/explain-chat/factors", { params: { ticker } });
+  return data;
+}
+
 export async function getMe() {
   const { data } = await client.get("/api/me");
   return data;
