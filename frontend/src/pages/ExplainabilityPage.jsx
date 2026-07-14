@@ -232,10 +232,12 @@ export default function ExplainabilityPage() {
             {narrative.answer &&
               (() => {
                 const paragraphs = narrative.answer.split("\n\n");
-                const [first, ...rest] = paragraphs;
+                const previewCount = Math.min(3, paragraphs.length);
+                const preview = paragraphs.slice(0, previewCount);
+                const rest = paragraphs.slice(previewCount);
                 return (
                   <div className="summary-narrative">
-                    <p>{first}</p>
+                    {preview.map((paragraph, i) => <p key={i}>{paragraph}</p>)}
                     {expanded && rest.map((paragraph, i) => <p key={i}>{paragraph}</p>)}
                     {rest.length > 0 && (
                       <button type="button" onClick={() => setExpanded((v) => !v)}>
