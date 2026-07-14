@@ -684,6 +684,70 @@ button:disabled {
   margin-bottom: 0;
 }
 
+.compare-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-2) 0;
+}
+
+.compare-charts-grid h3 {
+  margin: 0 0 var(--space-1);
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  margin-top: var(--space-2);
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.comparison-table th {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.comparison-row-selected {
+  background: var(--bg-surface-hover);
+}
+
+.comparison-table-vertical th,
+.comparison-table-vertical td {
+  border: 1px solid var(--border-subtle);
+}
+
+.comparison-table-vertical td:first-child {
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: normal;
+}
+
+.comparison-table-vertical tbody tr:nth-child(even) {
+  background: var(--bg-surface-hover);
+}
+
+.diff-up {
+  color: var(--chart-critical);
+}
+
+.diff-down {
+  color: var(--chart-good);
+}
+
 .glossary {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
