@@ -5,8 +5,8 @@ from anyio import to_thread
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.ml.llm_explainer import OllamaUnavailableError, explain_results
-from app.utils.cache import CACHE_COLLECTION, build_cache_key, get_cached
+from app.ml.llm_explainer import OllamaUnavailableError, explain_prediction_factors, explain_results
+from app.utils.cache import CACHE_COLLECTION, build_cache_key, get_cached, set_cached
 
 router = APIRouter()
 logger = logging.getLogger("nepse-ai")
@@ -81,3 +81,34 @@ async def explain_chat(payload: ChatRequest):
         raise HTTPException(status_code=503, detail=str(exc))
 
     return ChatResponse(answer=answer)
+
+
+@router.get("/api/explain-chat/factors", response_model=ChatResponse)
+async def explain_chat_factors(ticker: str):
+    """Long-form, example-rich explanation of the top SHAP factors behind the latest prediction
+    for `ticker` -- distinct from /api/explain-chat's concise Q&A style."""
+    key_suffix = build_cache_key(ticker)
+
+    predict_result = await get_cached(CACHE_COLLECTION, f"predict:{key_suffix}")
+    explain_result = await get_cached(CACHE_COLLECTION, f"explain:{key_suffix}")
+
+    if not predict_result or not explain_result:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No cached prediction/explainability analysis found for '{ticker}'. "
+            "Run the analysis endpoints first.",
+        )
+
+    cache_key = f"factors:{key_suffix}"
+    cached = await get_cached(CACHE_COLLECTION, cache_key)
+    if cached is not None:
+        return cached
+
+    try:
+        answer = await to_thread.run_sync(explain_prediction_factors, ticker, predict_result, explain_result)
+    except OllamaUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+
+    result = {"answer": answer}
+    await set_cached(CACHE_COLLECTION, cache_key, result)
+    return result
