@@ -238,7 +238,7 @@ export default function ExplainabilityPage() {
                     <p>{first}</p>
                     {expanded && rest.map((paragraph, i) => <p key={i}>{paragraph}</p>)}
                     {rest.length > 0 && (
-                      <button type="button" className="btn-secondary" onClick={() => setExpanded((v) => !v)}>
+                      <button type="button" onClick={() => setExpanded((v) => !v)}>
                         {expanded ? "Show less" : "More information"}
                       </button>
                     )}
