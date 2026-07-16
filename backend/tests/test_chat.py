@@ -4,10 +4,27 @@ Uses an in-memory fake Mongo cache (no real MongoDB required). The happy path ca
 real local Ollama instance if one is running; if not, that one assertion is skipped with
 a printed note rather than failing the whole suite.
 """
+import asyncio
+import re
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+
+class _FakeCursor:
+    def __init__(self, docs):
+        self._docs = docs
+
+    def __aiter__(self):
+        self._it = iter(self._docs)
+        return self
+
+    async def __anext__(self):
+        try:
+            return next(self._it)
+        except StopIteration:
+            raise StopAsyncIteration
 
 
 class FakeCollection:
@@ -19,6 +36,11 @@ class FakeCollection:
 
     async def update_one(self, filt, update, upsert=False):
         self.docs[filt["_id"]] = update["$set"]
+
+    def find(self, filt):
+        rx = re.compile(filt["_id"]["$regex"])
+        matched = [{**v, "_id": k} for k, v in self.docs.items() if rx.search(k)]
+        return _FakeCursor(matched)
 
 
 class FakeDB:
@@ -41,7 +63,7 @@ from app.main import app  # noqa: E402
 from app.routers import chat as chat_module  # noqa: E402
 from app.ml.llm_explainer import OllamaUnavailableError  # noqa: E402
 from app.routers.chat import _with_explicit_current_volatility  # noqa: E402
-from app.utils.cache import build_cache_key  # noqa: E402
+from app.utils.cache import build_cache_key, get_all_cached_for_ticker  # noqa: E402
 
 
 def test_with_explicit_current_volatility_injects_matching_value():
@@ -92,6 +114,24 @@ def test_503_when_ollama_unreachable():
     print("test_503_when_ollama_unreachable passed")
 
 
+def test_get_all_cached_for_ticker_merges_and_skips_non_context():
+    suffix = build_cache_key("MULTI")
+    docs = _fake_db["analysis_cache"].docs
+    docs[f"efficiency:{suffix}"] = {"verdict": "eff"}
+    docs[f"predict:{suffix}"] = {"metrics": {"rmse": 0.01}}
+    docs[f"backtest:{suffix}:0.5"] = {"verdict": "bt", "n_trades": 3}  # cost-suffixed key still matched
+    # these must NOT leak into chat context:
+    docs[f"sections:{suffix}"] = {"risk_analysis": {}}
+    docs[f"predict-compare:{suffix}"] = {"models": {}}  # 'predict' must not match 'predict-compare'
+
+    bundle = asyncio.run(get_all_cached_for_ticker("MULTI"))
+
+    assert set(bundle) == {"efficiency", "predict", "backtest"}, bundle
+    assert bundle["backtest"]["n_trades"] == 3
+    assert "_id" not in bundle["efficiency"]  # _id stripped like get_cached does
+    print("test_get_all_cached_for_ticker_merges_and_skips_non_context passed")
+
+
 def test_happy_path_merges_cached_results_and_answers():
     key_suffix = build_cache_key("DUMMY2")
     _fake_db["analysis_cache"].docs[f"efficiency:{key_suffix}"] = {
@@ -130,4 +170,5 @@ if __name__ == "__main__":
     test_with_explicit_current_volatility_noop_without_volatility_data()
     test_404_when_nothing_cached()
     test_503_when_ollama_unreachable()
+    test_get_all_cached_for_ticker_merges_and_skips_non_context()
     test_happy_path_merges_cached_results_and_answers()

@@ -5,14 +5,24 @@ from anyio import to_thread
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.ml.llm_explainer import OllamaUnavailableError, explain_prediction_factors, explain_results
-from app.utils.cache import CACHE_COLLECTION, build_cache_key, get_cached, set_cached
+from app.ml.data_loader import load_symbol
+from app.ml.history_summary import summarize_history
+from app.ml.llm_explainer import (
+    OllamaUnavailableError,
+    explain_prediction_factors,
+    explain_results,
+    generate_sectioned_explanation,
+)
+from app.utils.cache import (
+    CACHE_COLLECTION,
+    build_cache_key,
+    get_all_cached_for_ticker,
+    get_cached,
+    set_cached,
+)
 
 router = APIRouter()
 logger = logging.getLogger("nepse-ai")
-
-# same prefixes routers/efficiency.py, volatility.py, prediction.py, explainability.py cache under
-RESULT_PREFIXES = ("efficiency", "volatility", "predict", "explain")
 
 
 def _with_explicit_current_volatility(results: dict) -> dict:
@@ -59,13 +69,9 @@ class ChatResponse(BaseModel):
 
 @router.post("/api/explain-chat", response_model=ChatResponse)
 async def explain_chat(payload: ChatRequest):
-    key_suffix = build_cache_key(payload.ticker)
-
-    results = {}
-    for prefix in RESULT_PREFIXES:
-        cached = await get_cached(CACHE_COLLECTION, f"{prefix}:{key_suffix}")
-        if cached is not None:
-            results[prefix] = cached
+    # full cross-module bundle (efficiency, volatility, prediction, SHAP, history, backtest -- whichever
+    # exist) so a question asked on any page can still reference every other module's real numbers
+    results = await get_all_cached_for_ticker(payload.ticker)
 
     if not results:
         raise HTTPException(
@@ -112,3 +118,43 @@ async def explain_chat_factors(ticker: str):
     result = {"answer": answer}
     await set_cached(CACHE_COLLECTION, cache_key, result)
     return result
+
+
+def _history_payload(ticker: str) -> dict:
+    df = load_symbol(ticker)
+    return {"close": df["close"].tolist(), "summary": summarize_history(df)}
+
+
+@router.get("/api/explain-chat/sections")
+async def explain_chat_sections(ticker: str):
+    """Three distinct, non-overlapping explanation sections (Risk Analysis / Historical Trends /
+    Future Outlook), each with deterministic key_points + an Ollama narrative grounded in its own facts."""
+    key_suffix = build_cache_key(ticker)
+
+    volatility = await get_cached(CACHE_COLLECTION, f"volatility:{key_suffix}")
+    predict = await get_cached(CACHE_COLLECTION, f"predict:{key_suffix}")
+
+    if not volatility or not predict:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No cached volatility/prediction analysis found for '{ticker}'. Run the analysis endpoints first.",
+        )
+
+    cache_key = f"sections:{key_suffix}"
+    cached = await get_cached(CACHE_COLLECTION, cache_key)
+    if cached is not None:
+        return cached
+
+    try:
+        history = await to_thread.run_sync(_history_payload, ticker)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+    results = {"volatility": volatility, "predict": predict}
+    try:
+        sections = await to_thread.run_sync(generate_sectioned_explanation, results, history)
+    except OllamaUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+
+    await set_cached(CACHE_COLLECTION, cache_key, sections)
+    return sections
