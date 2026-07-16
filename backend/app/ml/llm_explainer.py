@@ -1,6 +1,7 @@
 """Plain-language explanations of ml/ results via a locally-running Ollama model (no paid API)."""
 import json
 import math
+import re
 
 import httpx
 
@@ -9,6 +10,15 @@ from app.core.config import settings
 
 class OllamaUnavailableError(RuntimeError):
     """Raised when the local Ollama server can't be reached."""
+
+
+def _use_rupees(text: str) -> str:
+    """NEPSE prices are Nepalese Rupees, but the local model habitually defaults to '$'/'dollars'.
+    Deterministic fix on the model's output (more reliable than prompt wording alone)."""
+    text = re.sub(r"\$\s?(?=\d)", "Rs ", text)  # "$419" / "$ 419" -> "Rs 419"
+    text = re.sub(r"\bdollars\b", "rupees", text, flags=re.IGNORECASE)
+    text = re.sub(r"\bdollar\b", "rupee", text, flags=re.IGNORECASE)
+    return text
 
 
 def _ollama_generate(prompt: str, timeout: int = 120) -> str:
@@ -25,7 +35,7 @@ def _ollama_generate(prompt: str, timeout: int = 120) -> str:
         raise OllamaUnavailableError(
             "Local AI model isn't running — start Ollama with `ollama serve`"
         ) from exc
-    return response.json()["response"].strip()
+    return _use_rupees(response.json()["response"].strip())
 
 
 def _trim_long_arrays(obj, max_items: int = 6):
@@ -135,7 +145,7 @@ def explain_results(results: dict, question: str | None = None) -> str:
             "Local AI model isn't running — start Ollama with `ollama serve`"
         ) from exc
 
-    return response.json()["response"].strip()
+    return _use_rupees(response.json()["response"].strip())
 
 
 # ── explain_prediction_factors: a long-form, example-rich explanation mode ──────────────────
@@ -263,7 +273,7 @@ def explain_prediction_factors(ticker: str, predict_result: dict, explain_result
             "Local AI model isn't running — start Ollama with `ollama serve`"
         ) from exc
 
-    return response.json()["response"].strip()
+    return _use_rupees(response.json()["response"].strip())
 
 
 # ── generate_sectioned_explanation: three separate, non-overlapping sections ─────────────────────
@@ -274,7 +284,8 @@ def explain_prediction_factors(ticker: str, predict_result: dict, explain_result
 
 _SECTION_STYLE = (
     "Write 2-4 sentences of plain English for a beginner. Use ONLY the facts above; never invent "
-    "numbers. No jargon without explaining it, no disclaimers about being an AI, no filler."
+    "numbers. All prices are in Nepalese Rupees (write 'Rs.'), never dollars or '$'. No jargon "
+    "without explaining it, no disclaimers about being an AI, no filler."
 )
 
 

@@ -13,6 +13,7 @@ from app.ml.llm_explainer import (  # noqa: E402
     _summarize_bundle,
     _top_factors,
     _trim_long_arrays,
+    _use_rupees,
     generate_sectioned_explanation,
 )
 
@@ -175,6 +176,15 @@ def test_summarize_bundle_trims_heavy_arrays_and_is_non_mutating():
     print("test_summarize_bundle_trims_heavy_arrays_and_is_non_mutating passed")
 
 
+def test_use_rupees_converts_dollar_symbols_and_words():
+    assert _use_rupees("The highest close was $419 on that day.") == "The highest close was Rs 419 on that day."
+    assert _use_rupees("worth $ 101.5 tomorrow") == "worth Rs 101.5 tomorrow"
+    assert _use_rupees("about 5 dollars") == "about 5 rupees"
+    assert _use_rupees("just one Dollar") == "just one rupee"
+    assert _use_rupees("no currency mentioned here") == "no currency mentioned here"
+    print("test_use_rupees_converts_dollar_symbols_and_words passed")
+
+
 def test_max_drawdown_pct():
     assert abs(_max_drawdown_pct([100, 110, 90, 105]) - (-18.181818)) < 1e-4
     assert _max_drawdown_pct([100, 101, 102]) == 0.0  # only-up series never draws down
@@ -224,5 +234,6 @@ if __name__ == "__main__":
     test_top_factors_empty_when_no_shap_data()
     test_build_detailed_factors_prompt_grounds_exact_values_no_swapping()
     test_summarize_bundle_trims_heavy_arrays_and_is_non_mutating()
+    test_use_rupees_converts_dollar_symbols_and_words()
     test_max_drawdown_pct()
     test_sectioned_explanation_grounded_and_non_overlapping()
