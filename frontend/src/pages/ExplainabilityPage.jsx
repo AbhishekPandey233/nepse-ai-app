@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Bar, Line } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2";
 
-import { getDetailedFactors, getExplanation, getHistory, getPrediction } from "../api/client.js";
+import { getDetailedFactors, getExplanation, getHistory, getPrediction, getRollingImpact } from "../api/client.js";
 import ChatWidget from "../components/ChatWidget.jsx";
 import ErrorRetry from "../components/ErrorRetry.jsx";
 import ExplainabilityChart from "../components/ExplainabilityChart.jsx";
 import LoadingSkeleton from "../components/LoadingSkeleton.jsx";
+import SectionedExplanation from "../components/SectionedExplanation.jsx";
+import ZoomableLine from "../components/ZoomableLine.jsx";
 import { TICKERS } from "../constants/tickers.js";
 import { useTickerData } from "../hooks/useTickerData.js";
 import { themeColor } from "../theme.js";
@@ -57,6 +59,21 @@ export default function ExplainabilityPage() {
   const historyResult = useTickerData(getHistory, ticker);
   const [narrative, setNarrative] = useState({ loading: false, error: "", answer: "" });
   const [expanded, setExpanded] = useState(false);
+  const [rolling, setRolling] = useState({ loading: false, error: "", data: null });
+
+  async function handleRollingImpact() {
+    setRolling({ loading: true, error: "", data: null });
+    try {
+      const result = await getRollingImpact(ticker, 60);
+      setRolling({ loading: false, error: "", data: result });
+    } catch (err) {
+      const message =
+        err.response?.status === 404
+          ? "No data for this ticker yet."
+          : err.response?.data?.detail || "Something went wrong. Please try again.";
+      setRolling({ loading: false, error: message, data: null });
+    }
+  }
 
   async function handleExplain() {
     setNarrative({ loading: true, error: "", answer: "" });
@@ -76,6 +93,7 @@ export default function ExplainabilityPage() {
   function handleTickerChange(e) {
     setTicker(e.target.value);
     setNarrative({ loading: false, error: "", answer: "" });
+    setRolling({ loading: false, error: "", data: null });
   }
 
   let topEntries = [];
@@ -133,6 +151,44 @@ export default function ExplainabilityPage() {
     plugins: { legend: { display: false } },
   };
 
+  // two rolling series on one time axis, each on its own y-axis (accuracy is a %, inefficiency is
+  // a small unitless number) so both are actually visible
+  const rollingChartData = rolling.data && {
+    labels: rolling.data.series.dates,
+    datasets: [
+      {
+        label: "Rolling directional accuracy (%)",
+        data: rolling.data.series.directional_accuracy,
+        borderColor: themeColor("--chart-cyan"),
+        pointRadius: 0,
+        yAxisID: "yAccuracy",
+      },
+      {
+        label: "Rolling inefficiency |VR-1|",
+        data: rolling.data.series.inefficiency,
+        borderColor: themeColor("--chart-critical"),
+        pointRadius: 0,
+        yAxisID: "yIneff",
+      },
+    ],
+  };
+  const rollingChartOptions = {
+    responsive: true,
+    animation: false,
+    interaction: { mode: "index", intersect: false },
+    scales: {
+      yAccuracy: { type: "linear", position: "left", title: { display: true, text: "Accuracy (%)" } },
+      yIneff: {
+        type: "linear",
+        position: "right",
+        grid: { drawOnChartArea: false },
+        title: { display: true, text: "Inefficiency |VR-1|" },
+      },
+    },
+  };
+
+  const fmtCorr = (r) => (r === null || r === undefined ? "n/a" : r.toFixed(3));
+
   return (
     <div className="explainability-page">
       <Link to="/dashboard" className="toggle-link">
@@ -169,7 +225,7 @@ export default function ExplainabilityPage() {
             Price history with the highest/lowest closes and largest single-day moves highlighted (green = high/gain,
             red = low/loss). Hover a point for the exact date and price.
           </p>
-          <Line data={priceHistoryChartData} options={priceHistoryOptions} />
+          <ZoomableLine data={priceHistoryChartData} options={priceHistoryOptions} />
           <ul className="summary-bullets">
             {trendSummary.bullets.map((bullet, i) => (
               <li key={i}>{bullet}</li>
@@ -250,6 +306,42 @@ export default function ExplainabilityPage() {
           </div>
         </>
       )}
+
+      <div className="card summary-panel">
+        <h2>Does the market's efficiency affect prediction accuracy?</h2>
+        <p className="hint">
+          Over rolling 60-day windows of the test period for {ticker}, this compares the model's directional accuracy
+          against how inefficient the market was in that window (|variance ratio - 1|) and how volatile it was. A
+          positive correlation means the model tends to predict better when the market is less efficient / more
+          volatile -- the direct "impact" link between AI prediction and market behaviour.
+        </p>
+        <button type="button" className="btn-primary" onClick={handleRollingImpact} disabled={rolling.loading}>
+          {rolling.loading ? "Computing rolling windows..." : "Analyse rolling impact"}
+        </button>
+        {rolling.error && <p className="error">{rolling.error}</p>}
+        {rolling.data &&
+          (rolling.data.n_windows === 0 ? (
+            <p className="hint">{rolling.data.message || "Not enough test data for this window."}</p>
+          ) : (
+            <>
+              <div className="stat-cards">
+                <div className="stat-card">
+                  <span className="stat-label">Inefficiency vs. accuracy</span>
+                  <span className="stat-value">{fmtCorr(rolling.data.correlations.inefficiency_vs_accuracy)}</span>
+                  <p className="stat-explain">Pearson correlation across {rolling.data.n_windows} rolling windows.</p>
+                </div>
+                <div className="stat-card">
+                  <span className="stat-label">Volatility vs. accuracy</span>
+                  <span className="stat-value">{fmtCorr(rolling.data.correlations.volatility_vs_accuracy)}</span>
+                  <p className="stat-explain">Pearson correlation across {rolling.data.n_windows} rolling windows.</p>
+                </div>
+              </div>
+              <ZoomableLine data={rollingChartData} options={rollingChartOptions} />
+            </>
+          ))}
+      </div>
+
+      <SectionedExplanation ticker={ticker} />
 
       <ChatWidget ticker={ticker} />
     </div>

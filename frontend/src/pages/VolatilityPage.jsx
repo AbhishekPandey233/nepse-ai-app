@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Line } from "react-chartjs-2";
 
 import { getVolatility } from "../api/client.js";
 import ChatWidget from "../components/ChatWidget.jsx";
 import ErrorRetry from "../components/ErrorRetry.jsx";
 import LoadingSkeleton from "../components/LoadingSkeleton.jsx";
+import SectionedExplanation from "../components/SectionedExplanation.jsx";
+import ZoomableLine from "../components/ZoomableLine.jsx";
 import { TICKERS } from "../constants/tickers.js";
 import { useTickerData } from "../hooks/useTickerData.js";
 import { themeColor } from "../theme.js";
@@ -194,7 +195,7 @@ export default function VolatilityPage() {
           </div>
 
           <div className="card chart-fade-in">
-            <Line data={spike.chartData} options={spike.chartOptions} />
+            <ZoomableLine data={spike.chartData} options={spike.chartOptions} />
           </div>
 
           {explanation && (
@@ -244,11 +245,11 @@ export default function VolatilityPage() {
             <div className="compare-charts-grid">
               <div>
                 <h3>{ticker}</h3>
-                <Line data={spike.chartData} options={spike.chartOptions} />
+                <ZoomableLine data={spike.chartData} options={spike.chartOptions} />
               </div>
               <div>
                 <h3>{compareTicker}</h3>
-                <Line data={compareSpike.chartData} options={compareSpike.chartOptions} />
+                <ZoomableLine data={compareSpike.chartData} options={compareSpike.chartOptions} />
               </div>
             </div>
 
@@ -294,6 +295,8 @@ export default function VolatilityPage() {
           </>
         )}
       </div>
+
+      <SectionedExplanation ticker={ticker} />
 
       <ChatWidget ticker={ticker} />
     </div>

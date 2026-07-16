@@ -1,10 +1,9 @@
-import { Line } from "react-chartjs-2";
-
 import { getVolatility } from "../api/client.js";
 import { useTickerData } from "../hooks/useTickerData.js";
 import { themeColor } from "../theme.js";
 import ErrorRetry from "./ErrorRetry.jsx";
 import LoadingSkeleton from "./LoadingSkeleton.jsx";
+import ZoomableLine from "./ZoomableLine.jsx";
 
 export default function VolatilityChart({ ticker }) {
   const { data, loading, error, retry } = useTickerData(getVolatility, ticker);
@@ -61,7 +60,7 @@ export default function VolatilityChart({ ticker }) {
   return (
     <div className="card chart-fade-in">
       <h2>Volatility (GARCH 1,1)</h2>
-      <Line data={chartData} options={{ responsive: true, animation: false }} />
+      <ZoomableLine data={chartData} options={{ responsive: true, animation: false }} />
     </div>
   );
 }
