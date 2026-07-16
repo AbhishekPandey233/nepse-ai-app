@@ -8,7 +8,17 @@ import numpy as np
 import pandas as pd
 
 from app.ml.data_loader import load_symbol
-from app.ml.prediction import _metrics, build_sequences, feature_cols, train_lstm, train_xgboost, with_target
+from app.ml.prediction import (
+    _metrics,
+    build_sequences,
+    combine_model_comparison,
+    feature_cols,
+    predict_arima,
+    predict_naive,
+    train_lstm,
+    train_xgboost,
+    with_target,
+)
 
 
 def test_train_xgboost_real_symbol():
@@ -115,6 +125,46 @@ def test_directional_accuracy_on_trending_series():
     print("test_directional_accuracy_on_trending_series passed:", accuracy)
 
 
+def test_baselines_share_xgboost_test_split():
+    """Naive and ARIMA must be scored on the EXACT same held-out actuals/dates as XGBoost, or the
+    RQ3 comparison isn't apples-to-apples. This is the property the whole comparison hinges on."""
+    df = load_symbol("nabil")
+    xgb = train_xgboost(df)
+    naive = predict_naive(df)
+    arima = predict_arima(df)
+
+    for baseline, name in [(naive, "naive"), (arima, "arima")]:
+        assert baseline["dates"] == xgb["dates"], f"{name} dates diverge from xgboost"
+        assert baseline["actual"] == xgb["actual"], f"{name} actuals diverge from xgboost"
+        assert len(baseline["predictions"]) == len(baseline["actual"])
+        m = baseline["metrics"]
+        assert m["rmse"] >= 0 and m["mae"] >= 0 and 0 <= m["directional_accuracy"] <= 100
+
+    assert naive["variant"] in ("persistence", "no_change")
+    assert set(naive["variants"]) == {"persistence", "no_change"}
+    print("test_baselines_share_xgboost_test_split passed:",
+          {"naive": naive["metrics"]["rmse"], "arima": arima["metrics"]["rmse"], "xgb": xgb["metrics"]["rmse"]})
+
+
+def test_predict_naive_persistence_beats_nothing_on_trend():
+    """On a clean uptrend, next-day direction is near-perfectly predictable, so the naive
+    persistence baseline's directional accuracy must be high -- a guard on the alignment math."""
+    df = _build_trending_series()
+    naive = predict_naive(df)
+    assert naive["metrics"]["directional_accuracy"] > 90, naive["metrics"]
+    print("test_predict_naive_persistence_beats_nothing_on_trend passed:", naive["metrics"])
+
+
+def test_combine_model_comparison_returns_all_four():
+    result = combine_model_comparison("nabil")
+    assert result["ticker"] == "NABIL"
+    assert set(result["models"]) == {"naive", "arima", "xgboost", "lstm"}
+    # naive/arima/xgboost always produce real metrics; lstm may carry an {"error": ...} if TF is absent
+    for name in ("naive", "arima", "xgboost"):
+        assert "metrics" in result["models"][name], name
+    print("test_combine_model_comparison_returns_all_four passed")
+
+
 def test_metrics_excludes_flat_days_from_directional_accuracy():
     """Flat/no-change days (actual == 0, common in thinly-traded NEPSE stocks) have no real
     direction to predict. np.sign(0) == 0 can never match a nonzero prediction, so counting
@@ -136,4 +186,7 @@ if __name__ == "__main__":
     test_train_lstm_real_symbol()
     test_s_no_excluded_from_features()
     test_directional_accuracy_on_trending_series()
+    test_baselines_share_xgboost_test_split()
+    test_predict_naive_persistence_beats_nothing_on_trend()
+    test_combine_model_comparison_returns_all_four()
     test_metrics_excludes_flat_days_from_directional_accuracy()

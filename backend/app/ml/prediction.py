@@ -1,9 +1,13 @@
-"""XGBoost baseline + LSTM comparison for next-day log-return prediction, on data_loader.load_symbol() output."""
+"""XGBoost + LSTM (AI) vs naive + ARIMA (traditional) next-day log-return prediction, on
+data_loader.load_symbol() output. All four are scored on the identical time-ordered test split
+so the comparison answers RQ3 (does AI-driven analysis outperform traditional approaches?)."""
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBRegressor
+
+from app.ml.data_loader import load_symbol
 
 NON_FEATURE_COLS = ("date", "symbol", "close", "target", "s_no")
 
@@ -34,6 +38,89 @@ def _metrics(actual, predictions) -> dict:
         "rmse": float(np.sqrt(mean_squared_error(actual, predictions))),
         "mae": float(mean_absolute_error(actual, predictions)),
         "directional_accuracy": directional_accuracy,
+    }
+
+
+def _test_split(df: pd.DataFrame) -> tuple:
+    """The exact time-ordered test target/dates the XGBoost path predicts on, so every baseline
+    is scored on identical (actual, date) pairs. Returns (returns, split_idx, actuals, dates).
+
+    with_target() drops the trailing (target-less) row, then the split is 80/20 on what remains --
+    identical boundary to train_xgboost. For a test row at index k the actual is next-day return
+    returns[k+1] and the date is that row's own date, matching train_xgboost's test["target"]/["date"].
+    """
+    returns = df["log_return"].to_numpy(dtype=float)
+    length = len(df)
+    n = length - 1  # with_target() drops the final row
+    split_idx = int(n * 0.8)
+
+    actuals = returns[split_idx + 1: length]  # next-day return for each test row
+    dates = [d.strftime("%Y-%m-%d") for d in df["date"].iloc[split_idx: length - 1]]
+    return returns, split_idx, actuals, dates
+
+
+def predict_naive(df: pd.DataFrame) -> dict:
+    """Naive persistence baseline (traditional, non-AI) on the same test split as train_xgboost.
+
+    Two classic variants: 'persistence' (next return == today's return) and 'no_change' (next
+    return == 0, i.e. a pure random walk in price). Reports the stronger of the two by RMSE as the
+    headline naive comparator, with both metric sets kept under 'variants' for the write-up.
+    """
+    returns, split_idx, actuals, dates = _test_split(df)
+    length = len(df)
+
+    persistence = returns[split_idx: length - 1]  # predict next return = today's return
+    no_change = np.zeros_like(actuals)  # predict next return = 0
+
+    variants = {
+        "persistence": _metrics(actuals, persistence),
+        "no_change": _metrics(actuals, no_change),
+    }
+    if variants["persistence"]["rmse"] <= variants["no_change"]["rmse"]:
+        preds, variant = persistence, "persistence"
+    else:
+        preds, variant = no_change, "no_change"
+
+    return {
+        "predictions": np.asarray(preds).tolist(),
+        "actual": actuals.tolist(),
+        "dates": dates,
+        "metrics": _metrics(actuals, preds),
+        "variant": variant,
+        "variants": variants,
+    }
+
+
+def predict_arima(df: pd.DataFrame, order: tuple = (1, 0, 1)) -> dict:
+    """ARIMA baseline (traditional, non-AI) via statsmodels, on the same test split as train_xgboost.
+
+    Rolling one-step-ahead forecast: fit ARIMA params once on the train returns, then walk the test
+    window forecasting the next return and revealing the true value each step (append, no refit) --
+    the standard honest way to score a time-series model out-of-sample.
+    """
+    import warnings
+
+    from statsmodels.tsa.arima.model import ARIMA
+
+    returns, split_idx, actuals, dates = _test_split(df)
+    length = len(df)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # convergence/frequency chatter, not actionable here
+        res = ARIMA(returns[: split_idx + 1], order=order).fit()
+        preds = []
+        for k in range(split_idx, length - 1):
+            preds.append(float(res.forecast(1)[0]))  # predicts returns[k+1]
+            if k < length - 2:
+                res = res.append([returns[k + 1]], refit=False)  # reveal actual, advance state
+
+    preds = np.asarray(preds)
+    return {
+        "predictions": preds.tolist(),
+        "actual": actuals.tolist(),
+        "dates": dates,
+        "metrics": _metrics(actuals, preds),
+        "order": list(order),
     }
 
 
@@ -124,3 +211,29 @@ def train_lstm(df: pd.DataFrame, lookback: int = 10) -> dict:
         "dates": [d.strftime("%Y-%m-%d") for d in test_dates],
         "metrics": _metrics(y_test, predictions),
     }
+
+
+def _strip_model(result: dict) -> dict:
+    return {k: v for k, v in result.items() if k != "model"}  # model object isn't JSON/Mongo-serializable
+
+
+def combine_model_comparison(symbol: str) -> dict:
+    """Run all four models -- naive + ARIMA (traditional) and XGBoost + LSTM (AI) -- on the same
+    symbol and same test split, returning every metric set together for one side-by-side table (RQ3).
+
+    LSTM is guarded: if TensorFlow is unavailable or fails, the traditional-vs-XGBoost comparison
+    still returns rather than 500ing the whole endpoint.
+    """
+    df = load_symbol(symbol)
+
+    models = {
+        "naive": predict_naive(df),
+        "arima": predict_arima(df),
+        "xgboost": _strip_model(train_xgboost(df)),
+    }
+    try:
+        models["lstm"] = _strip_model(train_lstm(df))
+    except Exception as exc:  # noqa: BLE001 -- TF optional/slow; comparison is still useful without it
+        models["lstm"] = {"error": str(exc)}
+
+    return {"ticker": symbol.upper(), "models": models}

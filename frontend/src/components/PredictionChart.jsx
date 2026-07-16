@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Line } from "react-chartjs-2";
 
 import { getPrediction } from "../api/client.js";
 import { useTickerData } from "../hooks/useTickerData.js";
@@ -7,6 +6,7 @@ import { themeColor } from "../theme.js";
 import { resolveModels } from "../utils/predictionModels.js";
 import ErrorRetry from "./ErrorRetry.jsx";
 import LoadingSkeleton from "./LoadingSkeleton.jsx";
+import ZoomableLine from "./ZoomableLine.jsx";
 
 export default function PredictionChart({ ticker }) {
   const { data, loading, error, retry } = useTickerData(getPrediction, ticker);
@@ -65,7 +65,7 @@ export default function PredictionChart({ ticker }) {
           </button>
         </div>
       )}
-      <Line data={chartData} options={{ responsive: true, animation: false }} />
+      <ZoomableLine data={chartData} options={{ responsive: true, animation: false }} />
       <p>
         RMSE: {active.metrics.rmse.toFixed(5)} · MAE: {active.metrics.mae.toFixed(5)} · Directional accuracy:{" "}
         {active.metrics.directional_accuracy.toFixed(1)}%
