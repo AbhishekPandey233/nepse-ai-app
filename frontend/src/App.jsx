@@ -4,6 +4,7 @@ import Layout from "./components/Layout.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import ExplainabilityPage from "./pages/ExplainabilityPage.jsx";
 import Login from "./pages/Login.jsx";
+import MarketOverview from "./pages/MarketOverview.jsx";
 import PredictionExplorer from "./pages/PredictionExplorer.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
 import VolatilityPage from "./pages/VolatilityPage.jsx";
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/market" element={<MarketOverview />} />
           <Route path="/prediction" element={<PredictionExplorer />} />
           <Route path="/volatility" element={<VolatilityPage />} />
           <Route path="/explainability" element={<ExplainabilityPage />} />

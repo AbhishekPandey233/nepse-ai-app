@@ -42,6 +42,33 @@ export async function getExplanation(ticker) {
   return data;
 }
 
+export async function getModelComparison(ticker) {
+  const { data } = await client.get("/api/predict/compare", { params: { ticker } });
+  return data;
+}
+
+export async function getMarketSummary() {
+  const { data } = await client.get("/api/market-summary");
+  return data;
+}
+
+export async function getSectionedExplanation(ticker) {
+  const { data } = await client.get("/api/explain-chat/sections", { params: { ticker } });
+  return data;
+}
+
+export async function getBacktest(ticker, transactionCost = 0.5) {
+  const { data } = await client.get("/api/predict/backtest", {
+    params: { ticker, transaction_cost: transactionCost },
+  });
+  return data;
+}
+
+export async function getRollingImpact(ticker, window = 60) {
+  const { data } = await client.get("/api/predict/rolling-impact", { params: { ticker, window } });
+  return data;
+}
+
 export async function getHistory(ticker) {
   const { data } = await client.get("/api/history", { params: { ticker } });
   return data;
