@@ -4,13 +4,44 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import app.ml.llm_explainer as llm  # noqa: E402
 from app.ml.llm_explainer import (  # noqa: E402
     PROMPT_RULES,
     _build_detailed_factors_prompt,
     _build_prompt,
+    _max_drawdown_pct,
+    _summarize_bundle,
     _top_factors,
     _trim_long_arrays,
+    generate_sectioned_explanation,
 )
+
+
+def _sample_results():
+    return {
+        "volatility": {"conditional_volatility": [0.01, 0.012, 0.02, 0.015, 0.018]},
+        "predict": {
+            "metrics": {"rmse": 0.009, "directional_accuracy": 53.2},
+            "next_day_forecast": {"predicted_return": 0.0123, "as_of_date": "2026-07-07"},
+        },
+    }
+
+
+def _sample_history():
+    return {
+        "close": [100.0, 110.0, 90.0, 105.0, 102.0],
+        "summary": {
+            "period_start": "2024-01-01",
+            "period_end": "2024-06-01",
+            "overall_return_pct": 2.0,
+            "highest_close": {"price": 110.0, "date": "2024-02-01"},
+            "lowest_close": {"price": 90.0, "date": "2024-03-01"},
+            "top_gains": [{"date": "2024-02-01", "return_pct": 9.5}],
+            "top_losses": [{"date": "2024-03-01", "return_pct": -18.2}],
+            "high_volatility_periods": [{"start": "2024-02-01", "end": "2024-02-10"}],
+            "high_volatility_threshold": 0.02,
+        },
+    }
 
 
 def test_trim_long_arrays_leaves_short_lists_alone():
@@ -109,6 +140,81 @@ def test_build_detailed_factors_prompt_grounds_exact_values_no_swapping():
     print("test_build_detailed_factors_prompt_grounds_exact_values_no_swapping passed")
 
 
+def test_summarize_bundle_trims_heavy_arrays_and_is_non_mutating():
+    bundle = {
+        "efficiency": {"verdict": "eff"},  # already compact -> untouched
+        "explain": {"base_value": 0.0001, "per_row_shap": [{"rsi_14": 0.1, "ma_10": -0.2}] * 50},
+        "predict": {
+            "metrics": {"rmse": 0.01, "directional_accuracy": 53.0},
+            "next_day_forecast": {"predicted_return": 0.01, "as_of_date": "2026-07-07"},
+            "predictions": [0.1] * 500,
+            "actual": [0.1] * 500,
+            "dates": ["2024-01-01", "2026-07-07"],
+        },
+        "volatility": {"params": {"alpha[1]": 0.1, "beta[1]": 0.8}, "conditional_volatility": [0.01, 0.03], "forecast": [0.02] * 10},
+        "backtest": {"strategy_total_return": -0.05, "buy_hold_total_return": 0.09, "n_trades": 38,
+                     "transaction_cost_pct": 0.5, "outperformed": False, "verdict": "did not outperform",
+                     "strategy_cumulative": [0.0] * 300},
+        "current_conditional_volatility_garch": 0.0126,  # non-module scalar -> passed through
+    }
+    out = _summarize_bundle(bundle)
+
+    # heavy per-day arrays are gone, headline numbers kept
+    assert "per_row_shap" not in out["explain"]
+    assert out["explain"]["top_factors_latest_prediction"], out["explain"]
+    assert "predictions" not in out["predict"] and out["predict"]["metrics"]["rmse"] == 0.01
+    assert out["predict"]["test_period"] == {"from": "2024-01-01", "to": "2026-07-07"}
+    assert "conditional_volatility" not in out["volatility"]
+    assert out["volatility"]["current_conditional_volatility"] == 0.03
+    assert "strategy_cumulative" not in out["backtest"] and out["backtest"]["n_trades"] == 38
+    assert out["efficiency"] == {"verdict": "eff"}
+    assert out["current_conditional_volatility_garch"] == 0.0126
+
+    # original bundle must not be mutated (shared cache object in production)
+    assert "per_row_shap" in bundle["explain"]
+    print("test_summarize_bundle_trims_heavy_arrays_and_is_non_mutating passed")
+
+
+def test_max_drawdown_pct():
+    assert abs(_max_drawdown_pct([100, 110, 90, 105]) - (-18.181818)) < 1e-4
+    assert _max_drawdown_pct([100, 101, 102]) == 0.0  # only-up series never draws down
+    print("test_max_drawdown_pct passed")
+
+
+def test_sectioned_explanation_grounded_and_non_overlapping():
+    # make Ollama return the prompt it received, so we can inspect exactly what each section saw
+    orig = llm._ollama_generate
+    llm._ollama_generate = lambda prompt, **kw: prompt  # noqa: ARG005
+    try:
+        out = generate_sectioned_explanation(_sample_results(), _sample_history())
+    finally:
+        llm._ollama_generate = orig
+
+    assert set(out) == {"risk_analysis", "historical_trends", "future_outlook"}
+    for section in out.values():
+        assert isinstance(section["key_points"], list) and len(section["key_points"]) >= 3
+        assert isinstance(section["narrative"], str) and section["narrative"]
+
+    risk = out["risk_analysis"]["narrative"]
+    trends = out["historical_trends"]["narrative"]
+    outlook = out["future_outlook"]["narrative"]
+
+    # each section is grounded in its OWN numbers...
+    assert "-18.2" in risk  # max drawdown
+    assert "9.5" in trends  # biggest up day
+    assert "1.23" in outlook and "53.2" in outlook  # forecast % + accuracy
+    assert "not a guarantee" in outlook  # honesty caveat is mandatory
+
+    # ...and does NOT leak the forecast number into the risk/history sections (non-overlap)
+    assert "1.23" not in risk
+    assert "1.23" not in trends
+
+    # key_points carry the correct figures deterministically
+    assert any("-18.2%" in kp for kp in out["risk_analysis"]["key_points"])
+    assert any("53.2%" in kp for kp in out["future_outlook"]["key_points"])
+    print("test_sectioned_explanation_grounded_and_non_overlapping passed")
+
+
 if __name__ == "__main__":
     test_trim_long_arrays_leaves_short_lists_alone()
     test_trim_long_arrays_truncates_long_lists()
@@ -117,3 +223,6 @@ if __name__ == "__main__":
     test_top_factors_sorted_by_absolute_shap_value()
     test_top_factors_empty_when_no_shap_data()
     test_build_detailed_factors_prompt_grounds_exact_values_no_swapping()
+    test_summarize_bundle_trims_heavy_arrays_and_is_non_mutating()
+    test_max_drawdown_pct()
+    test_sectioned_explanation_grounded_and_non_overlapping()
