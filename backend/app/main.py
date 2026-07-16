@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.db import client
-from app.routers import auth, chat, efficiency, explainability, history, prediction, volatility
+from app.routers import auth, chat, efficiency, explainability, history, market, prediction, volatility
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("nepse-ai")
@@ -26,6 +26,7 @@ app.include_router(volatility.router)
 app.include_router(prediction.router)
 app.include_router(explainability.router)
 app.include_router(history.router)
+app.include_router(market.router)
 app.include_router(chat.router)
 
 

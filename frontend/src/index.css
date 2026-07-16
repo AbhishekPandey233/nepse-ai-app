@@ -684,6 +684,22 @@ button:disabled {
   margin-bottom: 0;
 }
 
+.mini-chart {
+  height: 180px;
+  margin-bottom: var(--space-2);
+}
+
+.chart-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.35rem;
+}
+
+.btn-reset-zoom {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.6rem;
+}
+
 .compare-charts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
