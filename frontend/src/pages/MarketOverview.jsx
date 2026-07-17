@@ -30,6 +30,7 @@ const STAT_BLOCKS = [
 
 export default function MarketOverview() {
   const [state, setState] = useState({ loading: true, error: "", data: null });
+  const [query, setQuery] = useState("");
 
   async function load() {
     setState({ loading: true, error: "", data: null });
@@ -136,35 +137,67 @@ export default function MarketOverview() {
             <Bar data={adfHist} options={histOptions} />
           </div>
 
-          <div className="card summary-panel">
-            <h2>Per-symbol detail</h2>
-            <div className="table-scroll">
-              <table className="comparison-table">
-                <thead>
-                  <tr>
-                    <th>Symbol</th>
-                    <th>Against efficiency?</th>
-                    <th>ADF statistic</th>
-                    <th>Variance ratio</th>
-                    <th>GARCH persistence</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.per_symbol.map((r) => (
-                    <tr key={r.symbol}>
-                      <td>{r.symbol}</td>
-                      <td className={r.against_efficiency ? "diff-up" : "diff-down"}>
-                        {r.against_efficiency ? "Yes" : "No"}
-                      </td>
-                      <td>{r.adf_stat.toFixed(3)}</td>
-                      <td>{r.variance_ratio.toFixed(3)}</td>
-                      <td>{r.garch_persistence.toFixed(3)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {(() => {
+            const q = query.trim().toUpperCase();
+            const rows = q ? data.per_symbol.filter((r) => r.symbol.includes(q)) : data.per_symbol;
+            return (
+              <div className="card summary-panel">
+                <h2>Per-symbol detail</h2>
+                <div className="explorer-controls">
+                  <input
+                    type="search"
+                    placeholder="Search symbol (e.g. NABIL)"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    aria-label="Search symbol"
+                  />
+                  {q && (
+                    <button type="button" onClick={() => setQuery("")}>
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <p className="hint">
+                  Showing {rows.length} of {data.per_symbol.length} symbols.
+                </p>
+
+                {rows.length === 0 ? (
+                  <p className="hint">
+                    No symbol matching "{query.trim()}" in this summary. It covers only the{" "}
+                    {data.n_symbols_processed} highest-turnover symbols — rebuild with a wider universe
+                    (<code>python scripts/build_market_summary.py --n 100</code>) to include more.
+                  </p>
+                ) : (
+                  <div className="table-scroll">
+                    <table className="comparison-table">
+                      <thead>
+                        <tr>
+                          <th>Symbol</th>
+                          <th>Against efficiency?</th>
+                          <th>ADF statistic</th>
+                          <th>Variance ratio</th>
+                          <th>GARCH persistence</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((r) => (
+                          <tr key={r.symbol} className={q && r.symbol === q ? "comparison-row-selected" : ""}>
+                            <td>{r.symbol}</td>
+                            <td className={r.against_efficiency ? "diff-up" : "diff-down"}>
+                              {r.against_efficiency ? "Yes" : "No"}
+                            </td>
+                            <td>{r.adf_stat.toFixed(3)}</td>
+                            <td>{r.variance_ratio.toFixed(3)}</td>
+                            <td>{r.garch_persistence.toFixed(3)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </>
       )}
     </div>
