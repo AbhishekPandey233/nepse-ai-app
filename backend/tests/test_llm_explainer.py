@@ -4,8 +4,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import app.ml.llm_explainer as llm  # noqa: E402
-from app.ml.llm_explainer import (  # noqa: E402
+import app.ml.llm_explainer as llm
+from app.ml.llm_explainer import (
     PROMPT_RULES,
     _build_detailed_factors_prompt,
     _build_prompt,
@@ -55,7 +55,7 @@ def test_trim_long_arrays_truncates_long_lists():
     long_list = list(range(200))
     trimmed = _trim_long_arrays({"dates": long_list})
 
-    assert len(trimmed["dates"]) == 7  # 3 head + 1 marker + 3 tail
+    assert len(trimmed["dates"]) == 7
     assert trimmed["dates"][:3] == [0, 1, 2]
     assert trimmed["dates"][-3:] == [197, 198, 199]
     assert "omitted" in trimmed["dates"][3]
@@ -91,7 +91,7 @@ def test_build_prompt_includes_rules_examples_and_data():
 def test_top_factors_sorted_by_absolute_shap_value():
     explain_result = {
         "per_row_shap": [
-            {"rsi_14": 0.0001},  # earlier row, must be ignored -- only the LATEST row counts
+            {"rsi_14": 0.0001},
             {"rsi_14": -0.0005, "ma_10": 0.0009, "diff_pct": 0.0002},
         ]
     }
@@ -122,16 +122,13 @@ def test_build_detailed_factors_prompt_grounds_exact_values_no_swapping():
     prompt = _build_detailed_factors_prompt("NABIL", predict_result, explain_result)
 
     assert "NABIL" in prompt
-    assert "0.00012" in prompt  # base_value
-    assert "52.5" in prompt  # directional accuracy
-    # forecast is converted to a percentage (easier for the model to quote verbatim) and the
-    # prompt must explicitly forbid claiming it's unavailable
+    assert "0.00012" in prompt
+    assert "52.5" in prompt
     import math
 
     expected_pct = round((math.exp(0.0123) - 1) * 100, 3)
     assert f"{expected_pct}%" in prompt
     assert "never say it is unknown or unavailable" in prompt
-    # each factor's exact value must appear verbatim, not swapped with another factor's
     assert "0.0013" in prompt
     assert "-0.0009" in prompt
     assert "-0.0007" in prompt
@@ -143,7 +140,7 @@ def test_build_detailed_factors_prompt_grounds_exact_values_no_swapping():
 
 def test_summarize_bundle_trims_heavy_arrays_and_is_non_mutating():
     bundle = {
-        "efficiency": {"verdict": "eff"},  # already compact -> untouched
+        "efficiency": {"verdict": "eff"},
         "explain": {"base_value": 0.0001, "per_row_shap": [{"rsi_14": 0.1, "ma_10": -0.2}] * 50},
         "predict": {
             "metrics": {"rmse": 0.01, "directional_accuracy": 53.0},
@@ -156,11 +153,10 @@ def test_summarize_bundle_trims_heavy_arrays_and_is_non_mutating():
         "backtest": {"strategy_total_return": -0.05, "buy_hold_total_return": 0.09, "n_trades": 38,
                      "transaction_cost_pct": 0.5, "outperformed": False, "verdict": "did not outperform",
                      "strategy_cumulative": [0.0] * 300},
-        "current_conditional_volatility_garch": 0.0126,  # non-module scalar -> passed through
+        "current_conditional_volatility_garch": 0.0126,
     }
     out = _summarize_bundle(bundle)
 
-    # heavy per-day arrays are gone, headline numbers kept
     assert "per_row_shap" not in out["explain"]
     assert out["explain"]["top_factors_latest_prediction"], out["explain"]
     assert "predictions" not in out["predict"] and out["predict"]["metrics"]["rmse"] == 0.01
@@ -171,7 +167,6 @@ def test_summarize_bundle_trims_heavy_arrays_and_is_non_mutating():
     assert out["efficiency"] == {"verdict": "eff"}
     assert out["current_conditional_volatility_garch"] == 0.0126
 
-    # original bundle must not be mutated (shared cache object in production)
     assert "per_row_shap" in bundle["explain"]
     print("test_summarize_bundle_trims_heavy_arrays_and_is_non_mutating passed")
 
@@ -187,14 +182,13 @@ def test_use_rupees_converts_dollar_symbols_and_words():
 
 def test_max_drawdown_pct():
     assert abs(_max_drawdown_pct([100, 110, 90, 105]) - (-18.181818)) < 1e-4
-    assert _max_drawdown_pct([100, 101, 102]) == 0.0  # only-up series never draws down
+    assert _max_drawdown_pct([100, 101, 102]) == 0.0
     print("test_max_drawdown_pct passed")
 
 
 def test_sectioned_explanation_grounded_and_non_overlapping():
-    # make Ollama return the prompt it received, so we can inspect exactly what each section saw
     orig = llm._ollama_generate
-    llm._ollama_generate = lambda prompt, **kw: prompt  # noqa: ARG005
+    llm._ollama_generate = lambda prompt, **kw: prompt
     try:
         out = generate_sectioned_explanation(_sample_results(), _sample_history())
     finally:
@@ -209,17 +203,14 @@ def test_sectioned_explanation_grounded_and_non_overlapping():
     trends = out["historical_trends"]["narrative"]
     outlook = out["future_outlook"]["narrative"]
 
-    # each section is grounded in its OWN numbers...
-    assert "-18.2" in risk  # max drawdown
-    assert "9.5" in trends  # biggest up day
-    assert "1.23" in outlook and "53.2" in outlook  # forecast % + accuracy
-    assert "not a guarantee" in outlook  # honesty caveat is mandatory
+    assert "-18.2" in risk
+    assert "9.5" in trends
+    assert "1.23" in outlook and "53.2" in outlook
+    assert "not a guarantee" in outlook
 
-    # ...and does NOT leak the forecast number into the risk/history sections (non-overlap)
     assert "1.23" not in risk
     assert "1.23" not in trends
 
-    # key_points carry the correct figures deterministically
     assert any("-18.2%" in kp for kp in out["risk_analysis"]["key_points"])
     assert any("53.2%" in kp for kp in out["future_outlook"]["key_points"])
     print("test_sectioned_explanation_grounded_and_non_overlapping passed")

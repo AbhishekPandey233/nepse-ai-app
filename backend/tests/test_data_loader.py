@@ -16,9 +16,8 @@ CLOSES = [100 + i * 0.7 for i in range(30)]
 
 
 def _build_history() -> pd.DataFrame:
-    # irregular gaps (not just weekends) to prove returns use consecutive rows, not consecutive calendar days
     dates = pd.bdate_range("2024-01-01", periods=40)
-    dates = dates.delete([5, 6, 7, 20, 21])[:30]  # drop a few extra days to create bigger gaps
+    dates = dates.delete([5, 6, 7, 20, 21])[:30]
     closes = CLOSES
 
     test_symbol = pd.DataFrame({
@@ -42,15 +41,13 @@ def test_load_symbol():
         _build_history().to_parquet(path, index=False)
 
         data_loader.HISTORY_PATH = path
-        data_loader._history_df = None  # reset module-level cache
+        data_loader._history_df = None
 
-        df = data_loader.load_symbol("test")  # lowercase, checks case-insensitive match
+        df = data_loader.load_symbol("test")
 
         assert df["date"].is_monotonic_increasing, "must be sorted by date ascending"
         assert df[data_loader.ENGINEERED_COLS].isna().sum().sum() == 0, "leading NaN rows should be dropped"
 
-        # compare against the original 30-row close series (not df["close"], which has had
-        # leading warmup rows dropped and no longer holds the full rolling-window history)
         expected_log_return = math.log(CLOSES[-1] / CLOSES[-2])
         assert math.isclose(df["log_return"].iloc[-1], expected_log_return), "log return must use consecutive rows"
 
@@ -60,7 +57,6 @@ def test_load_symbol():
         assert math.isclose(df["lag_return_1"].iloc[-1], df["log_return"].iloc[-2])
         assert math.isclose(df["lag_return_2"].iloc[-1], df["log_return"].iloc[-3])
 
-        # vwap/120_days/etc must be passed through untouched, not recomputed
         assert math.isclose(df["vwap"].iloc[-1], CLOSES[-1] * 0.99)
 
         assert set(df["symbol"]) == {"TEST"}, "must not leak rows from other symbols"

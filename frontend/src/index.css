@@ -1,8 +1,6 @@
-/* ==========================================================================
-   Design tokens
-   ========================================================================== */
+
 :root {
-  /* surfaces */
+
   --bg-page: #090d18;
   --bg-surface: #131c31;
   --bg-surface-hover: #1a2540;
@@ -10,14 +8,10 @@
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.16);
 
-  /* bright neon UI accents -- buttons, active states, glow. NOT used as chart
-     marks directly (too light to pass dark-mode chart-contrast banding) */
   --accent-cyan: #22d3ee;
   --accent-cyan-ink: #052228;
   --accent-violet: #a78bfa;
 
-  /* chart-mark colors -- validated (lightness band, CVD separation, contrast)
-     against --bg-surface with the dataviz skill's validate_palette.js */
   --chart-cyan: #0e93b3;
   --chart-violet: #7c6ce6;
   --chart-good: #1fa971;
@@ -25,12 +19,10 @@
   --chart-critical: #d9584f;
   --chart-neutral: #6b7690;
 
-  /* text */
   --text-primary: #e8ecf5;
   --text-secondary: #9aa4bd;
   --text-muted: #6b7690;
 
-  /* status badges (UI, not chart marks -- can stay closer to the bright accents) */
   --status-good-bg: rgba(31, 169, 113, 0.16);
   --status-good-text: #4ade80;
   --status-warning-bg: rgba(194, 130, 15, 0.18);
@@ -38,7 +30,6 @@
   --status-critical-bg: rgba(217, 88, 79, 0.18);
   --status-critical-text: #f87171;
 
-  /* shape & spacing */
   --radius: 10px;
   --radius-sm: 6px;
   --space-1: 0.5rem;
@@ -47,13 +38,11 @@
   --space-4: 1.5rem;
   --space-5: 2rem;
 
-  /* typography */
   --font-size-h1: 1.75rem;
   --font-size-h2: 1.05rem;
   --font-size-body: 1rem;
   --font-size-small: 0.85rem;
 
-  /* motion */
   --transition-fast: 150ms ease;
   --transition-base: 200ms ease;
   --transition-slow: 300ms ease;
@@ -61,9 +50,6 @@
   --sidebar-width: 220px;
 }
 
-/* ==========================================================================
-   Base / reset
-   ========================================================================== */
 * {
   box-sizing: border-box;
 }
@@ -171,9 +157,6 @@ button:disabled {
   font-size: var(--font-size-small);
 }
 
-/* ==========================================================================
-   Auth (Login) -- outside Layout, no sidebar, still dark-themed via body
-   ========================================================================== */
 .login-screen {
   min-height: 100vh;
   display: flex;
@@ -193,9 +176,6 @@ button:disabled {
   animation: modal-pop-in var(--transition-slow);
 }
 
-/* ==========================================================================
-   Layout + Sidebar
-   ========================================================================== */
 .layout {
   min-height: 100vh;
   background: var(--bg-page);
@@ -334,9 +314,6 @@ button:disabled {
   }
 }
 
-/* ==========================================================================
-   Cards / panels
-   ========================================================================== */
 .card {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -365,7 +342,6 @@ button:disabled {
   margin-bottom: 0;
 }
 
-/* charts fade/scale in on load instead of popping in */
 .chart-fade-in {
   animation: chart-fade-in var(--transition-slow);
 }
@@ -417,11 +393,6 @@ button:disabled {
   margin-bottom: var(--space-2);
 }
 
-/* ==========================================================================
-   Chat widget -- docked full-height side panel (Copilot-style), overlaying
-   the content area but never covering the sidebar (it docks to the right,
-   sidebar is fixed to the left, so the two can never overlap)
-   ========================================================================== */
 .chat-toggle {
   position: fixed;
   bottom: 1.5rem;
@@ -544,9 +515,6 @@ button:disabled {
   flex: 1;
 }
 
-/* ==========================================================================
-   Loading skeleton / error+retry
-   ========================================================================== */
 .skeleton {
   display: flex;
   flex-direction: column;
@@ -580,9 +548,6 @@ button:disabled {
   margin: 0;
 }
 
-/* ==========================================================================
-   Explorer pages (Prediction / Volatility / Explainability)
-   ========================================================================== */
 .explorer-controls {
   display: flex;
   gap: var(--space-2);
@@ -689,6 +654,36 @@ button:disabled {
   margin-bottom: var(--space-2);
 }
 
+.factor-select {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.9rem;
+}
+
+.factor-select legend {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  padding: 0 0.4rem;
+}
+
+.factor-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+
+.factor-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.factor-option input {
+  width: auto;
+  cursor: pointer;
+}
+
 .chart-toolbar {
   display: flex;
   justify-content: flex-end;
@@ -783,16 +778,10 @@ button:disabled {
   font-size: 0.9rem;
 }
 
-/* ==========================================================================
-   Profile page
-   ========================================================================== */
 .profile-field {
   margin-bottom: var(--space-3);
 }
 
-/* ==========================================================================
-   Confirm modal
-   ========================================================================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -854,9 +843,6 @@ button:disabled {
   }
 }
 
-/* ==========================================================================
-   Responsive
-   ========================================================================== */
 @media (max-width: 640px) {
   .chart-grid {
     grid-template-columns: 1fr;
@@ -876,9 +862,6 @@ button:disabled {
   }
 }
 
-/* ==========================================================================
-   Reduced motion
-   ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

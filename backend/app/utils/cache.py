@@ -6,12 +6,9 @@ from app.core.db import get_database
 
 CACHE_COLLECTION = "analysis_cache"
 MARKET_SUMMARY_COLLECTION = "market_summary"
-MARKET_SUMMARY_ID = "latest"  # single overwritten doc; precomputed offline, read by /api/market-summary
+MARKET_SUMMARY_ID = "latest"
 PARQUET_PATH = Path(__file__).resolve().parents[2] / "data" / "processed" / "nepse_history.parquet"
 
-# raw structured results the chat should be able to draw on for cross-module questions. Deliberately
-# excludes the LLM-narrative caches (sections/factors) and the derived compare/rolling caches -- those
-# are outputs, not source data.
 CHAT_CONTEXT_PREFIXES = ("efficiency", "volatility", "predict", "explain", "history", "backtest")
 
 

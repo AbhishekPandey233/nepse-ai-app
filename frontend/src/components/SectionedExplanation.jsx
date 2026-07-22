@@ -10,7 +10,6 @@ import { themeColor } from "../theme.js";
 import { buildPriceHistoryChartData } from "../utils/historyNarrative.js";
 import ZoomableLine from "./ZoomableLine.jsx";
 
-// compact charts: fixed-height container (see .mini-chart), no legend, thin lines
 const MINI_OPTS = {
   responsive: true,
   maintainAspectRatio: false,
@@ -19,12 +18,6 @@ const MINI_OPTS = {
   elements: { point: { radius: 0 }, line: { borderWidth: 1.5 } },
 };
 
-/**
- * The three-section explanation (Risk Analysis / Historical Trends / Future Outlook) shared by the
- * Prediction, Volatility, and Explainability pages. Narratives + key_points come from the sectioned
- * endpoint (Ollama); each card's mini chart reuses the page data (volatility / history / prediction),
- * fetched here so callers just drop in <SectionedExplanation ticker={t} />.
- */
 export default function SectionedExplanation({ ticker }) {
   const [sections, setSections] = useState({ loading: true, error: "", data: null });
   const [vol, setVol] = useState(null);
@@ -38,8 +31,6 @@ export default function SectionedExplanation({ ticker }) {
     setHist(null);
     setPred(null);
 
-    // warm the mini-chart data first (also ensures volatility+prediction are cached before the
-    // sections endpoint, which 404s if they aren't), then fetch the Ollama narratives
     Promise.allSettled([getVolatility(ticker), getHistory(ticker), getPrediction(ticker)])
       .then(([v, h, p]) => {
         if (cancelled) return null;

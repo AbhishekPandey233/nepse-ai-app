@@ -12,8 +12,6 @@ export default function Layout() {
   return (
     <div className="layout">
       <Sidebar />
-      {/* key={pathname} forces a remount on navigation, replaying the
-          .layout-content fade-in as a lightweight page transition */}
       <main className="layout-content" key={location.pathname}>
         <Outlet />
       </main>

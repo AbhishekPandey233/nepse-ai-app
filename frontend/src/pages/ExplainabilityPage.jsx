@@ -14,7 +14,6 @@ import { useTickerData } from "../hooks/useTickerData.js";
 import { themeColor } from "../theme.js";
 import { buildPriceHistoryChartData, buildTrendSummary } from "../utils/historyNarrative.js";
 
-// hard-coded since the feature set is fixed (data_loader.py's engineered + raw columns)
 const FEATURE_GLOSSARY = {
   s_no: "Row order from the daily exchange listing (not a market signal).",
   conf: "Confidence/certainty score reported for that day's trade.",
@@ -54,7 +53,7 @@ const FALLBACK_GLOSSARY_ENTRY = "A statistical trading feature used by the predi
 export default function ExplainabilityPage() {
   const [searchParams] = useSearchParams();
   const [ticker, setTicker] = useState(searchParams.get("ticker") || TICKERS[0]);
-  const predictResult = useTickerData(getPrediction, ticker); // only used to label the most recent date
+  const predictResult = useTickerData(getPrediction, ticker);
   const { data, loading, error, retry } = useTickerData(getExplanation, ticker);
   const historyResult = useTickerData(getHistory, ticker);
   const [narrative, setNarrative] = useState({ loading: false, error: "", answer: "" });
@@ -151,8 +150,6 @@ export default function ExplainabilityPage() {
     plugins: { legend: { display: false } },
   };
 
-  // two rolling series on one time axis, each on its own y-axis (accuracy is a %, inefficiency is
-  // a small unitless number) so both are actually visible
   const rollingChartData = rolling.data && {
     labels: rolling.data.series.dates,
     datasets: [

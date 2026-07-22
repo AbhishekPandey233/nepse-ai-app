@@ -7,6 +7,7 @@ const LINKS = [
   { to: "/prediction", label: "Prediction" },
   { to: "/volatility", label: "Volatility" },
   { to: "/explainability", label: "Explainability" },
+  { to: "/portfolio", label: "Portfolio" },
   { to: "/profile", label: "Profile" },
 ];
 

@@ -54,8 +54,6 @@ const COMPARE_METRICS = [
   { key: "directional_accuracy", label: "Directional acc.", lowerBetter: false, format: (v) => `${v.toFixed(1)}%` },
 ];
 
-// which model wins each metric, so the table can flag it -- lower is better for error metrics,
-// higher for directional accuracy
 function bestModelPerMetric(models) {
   const best = {};
   for (const { key, lowerBetter } of COMPARE_METRICS) {
@@ -91,7 +89,6 @@ export default function PredictionExplorer() {
     if (dates.length > 0) {
       setSelectedDate(dates[dates.length - 1]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
   useEffect(() => {

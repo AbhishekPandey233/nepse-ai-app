@@ -89,4 +89,23 @@ export async function getMe() {
   return data;
 }
 
+export async function getHoldings() {
+  const { data } = await client.get("/api/portfolio");
+  return data;
+}
+
+export async function addHolding(holding) {
+  const { data } = await client.post("/api/portfolio", holding);
+  return data;
+}
+
+export async function updateHolding(id, holding) {
+  const { data } = await client.put(`/api/portfolio/${id}`, holding);
+  return data;
+}
+
+export async function deleteHolding(id) {
+  await client.delete(`/api/portfolio/${id}`);
+}
+
 export default client;

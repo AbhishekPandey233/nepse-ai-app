@@ -27,10 +27,6 @@ def fit_garch(returns: pd.Series, forecast_days: int = 10) -> dict:
     else:
         dates = list(returns.index)
 
-    # alpha[1] (reactivity to yesterday's shock) and beta[1] (how much volatility persists
-    # day-to-day) explain WHY the volatility series looks the way it does -- their sum close
-    # to 1 means volatility is highly persistent ("clustering": once it rises, it stays
-    # elevated for a while), not just a single "current level" number.
     params = {name: float(value) for name, value in fit.params.items()}
 
     return {

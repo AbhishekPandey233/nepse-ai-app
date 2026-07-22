@@ -11,7 +11,7 @@ router = APIRouter()
 
 def _compute(ticker: str) -> dict:
     df = load_symbol(ticker)
-    model = train_xgboost(df)["model"]  # only the cached predict endpoint persists this; retrain here
+    model = train_xgboost(df)["model"]
 
     data = with_target(df)
     cols = feature_cols(data)

@@ -1,5 +1,3 @@
-// Deterministic (no-LLM) prose built directly from history_summary.py's computed stats --
-// always numerically accurate and instant, unlike routing this through the local LLM.
 
 export function buildTrendSummary(ticker, summary) {
   const direction = summary.overall_return_pct >= 0 ? "risen" : "fallen";

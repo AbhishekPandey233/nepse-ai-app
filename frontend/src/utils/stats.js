@@ -8,13 +8,11 @@ export function quantile(sortedValues, q) {
   return sortedValues[base];
 }
 
-// % of `values` that are <= `value` -- e.g. 92 means value is higher than 92% of history
 export function percentileRank(value, values) {
   const belowOrEqual = values.filter((v) => v <= value).length;
   return (belowOrEqual / values.length) * 100;
 }
 
-// collapse a boolean mask into contiguous {start, end} date ranges
 export function contiguousRanges(dates, mask) {
   const ranges = [];
   let start = null;

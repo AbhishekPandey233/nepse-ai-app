@@ -32,7 +32,7 @@ def test_read_daily_csv():
         assert aclbsl["turnover"] == 537920.10, "comma thousand-separator not stripped correctly"
 
         ahl = df[df["symbol"] == "AHL"].iloc[0]
-        assert ahl["conf"] != ahl["conf"], "blank/'-' cell should become NaN"  # NaN != NaN
+        assert ahl["conf"] != ahl["conf"], "blank/'-' cell should become NaN"
 
     print("test_read_daily_csv passed")
 

@@ -4,8 +4,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.ml.data_loader import load_symbol  # noqa: E402
-from app.ml.market_summary import (  # noqa: E402
+from app.ml.data_loader import load_symbol
+from app.ml.market_summary import (
     _pearson,
     _summary_stats,
     build_market_summary,
@@ -29,7 +29,6 @@ def test_summary_stats_empty():
 
 
 def test_build_market_summary_real_symbols():
-    # a couple of real symbols plus a bogus one that MUST be skipped, not crash the whole run
     summary = build_market_summary(["nabil", "adbl", "NOTASYMBOL123"])
 
     assert summary["n_symbols_processed"] == 2, summary["n_symbols_processed"]
@@ -43,7 +42,6 @@ def test_build_market_summary_real_symbols():
         assert summary[key]["n"] == 2, key
         assert summary[key]["mean"] is not None
 
-    # persistence (alpha+beta) is a variance-weight sum -- should be a sane, non-negative number
     assert summary["garch_persistence"]["mean"] >= 0
 
     assert len(summary["per_symbol"]) == 2
@@ -57,10 +55,10 @@ def test_build_market_summary_real_symbols():
 
 
 def test_pearson_basics():
-    assert _pearson([1, 2, 3], [2, 4, 6]) > 0.999  # perfectly correlated
-    assert _pearson([1, 2, 3], [6, 4, 2]) < -0.999  # perfectly anti-correlated
-    assert _pearson([1, 1, 1], [1, 2, 3]) is None  # flat series -> undefined
-    assert _pearson([1, 2], [1, 2]) is None  # too few points
+    assert _pearson([1, 2, 3], [2, 4, 6]) > 0.999
+    assert _pearson([1, 2, 3], [6, 4, 2]) < -0.999
+    assert _pearson([1, 1, 1], [1, 2, 3]) is None
+    assert _pearson([1, 2], [1, 2]) is None
     print("test_pearson_basics passed")
 
 
@@ -76,11 +74,9 @@ def test_rolling_efficiency_vs_accuracy_real_symbol():
     for key in ("dates", "directional_accuracy", "variance_ratio", "inefficiency", "volatility"):
         assert len(s[key]) == n, f"{key} length {len(s[key])} != n_windows {n}"
 
-    # correlations are either a real coefficient in [-1, 1] or None (undefined)
     for name, r in result["correlations"].items():
         assert r is None or (-1.0 <= r <= 1.0), f"{name}={r}"
 
-    # volatility (realized std) must be non-negative wherever present
     assert all(v is None or v >= 0 for v in s["volatility"])
 
     print("test_rolling_efficiency_vs_accuracy_real_symbol passed:", result["correlations"], "n=", n)

@@ -15,7 +15,6 @@ export default function ChatWidget({ ticker }) {
     lastTickerRef.current = ticker;
     setMessages([]);
     sendMessage(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticker]);
 
   useEffect(() => {

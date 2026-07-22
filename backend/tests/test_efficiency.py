@@ -31,7 +31,7 @@ def test_variance_ratio_does_not_reject_price_random_walk():
     formula end-to-end the way real price data would be built."""
     rng = np.random.default_rng(123)
     steps = rng.normal(loc=0.0, scale=1.0, size=5000)
-    price = 100 * np.exp(np.cumsum(steps) * 0.01)  # geometric random walk in price level
+    price = 100 * np.exp(np.cumsum(steps) * 0.01)
     log_returns = pd.Series(np.diff(np.log(price)))
 
     result = run_efficiency_tests(log_returns)
@@ -48,7 +48,7 @@ def test_detects_autocorrelation_in_trending_series():
     noise = rng.normal(0, 0.001, size=1000)
     ar1 = np.zeros(1000)
     for t in range(1, 1000):
-        ar1[t] = 0.8 * ar1[t - 1] + noise[t]  # strong positive autocorrelation (AR(1), phi=0.8)
+        ar1[t] = 0.8 * ar1[t - 1] + noise[t]
     momentum_returns = pd.Series(ar1)
 
     result = run_efficiency_tests(momentum_returns)

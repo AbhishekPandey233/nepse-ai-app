@@ -19,9 +19,6 @@ function averageOf(values) {
   return values.reduce((sum, v) => sum + v, 0) / values.length;
 }
 
-// builds the same "spike" line chart (conditional volatility with high-vol points highlighted
-// in red above the 80th-percentile threshold, plus a dashed forecast tail) for any symbol's
-// volatility payload, so the main chart and the comparison mini-charts always agree visually
 function buildSpikeChartData(volData) {
   const history = volData.conditional_volatility;
   const sorted = [...history].sort((a, b) => a - b);
@@ -78,13 +75,12 @@ function buildSpikeChartData(volData) {
   return { chartData, chartOptions: { responsive: true, animation: false }, currentValue, topPercent, threshold, history };
 }
 
-// summarizes a single symbol's GARCH output down to the handful of numbers worth comparing
 function volatilityStats(volData) {
   const alpha = volData.params["alpha[1]"] ?? 0;
   const beta = volData.params["beta[1]"] ?? 0;
   return {
     average: averageOf(volData.conditional_volatility),
-    persistence: alpha + beta, // how strongly volatility clusters/persists day-to-day
+    persistence: alpha + beta,
     forecastAvg: averageOf(volData.forecast),
   };
 }
@@ -101,7 +97,6 @@ export default function VolatilityPage() {
     const newTicker = e.target.value;
     setTicker(newTicker);
     setCompareState((s) => ({ ...s, active: false }));
-    // keep the compare dropdown's selection valid -- it excludes whatever ticker is chosen above
     setCompareTicker((prev) => (prev === newTicker ? TICKERS.find((t) => t !== newTicker) || TICKERS[0] : prev));
   }
 
@@ -135,8 +130,6 @@ export default function VolatilityPage() {
   if (data) {
     spike = buildSpikeChartData(data);
 
-    // same array + same threshold already used for the chart's point highlighting, so the
-    // "why" text below always agrees with what's actually drawn
     const highVolMask = spike.history.map((v) => v > spike.threshold);
     const highVolatilityPeriods = contiguousRanges(data.dates, highVolMask);
 

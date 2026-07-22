@@ -17,9 +17,9 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.core.db import get_database  # noqa: E402
-from app.ml.market_summary import build_market_summary  # noqa: E402
-from app.utils.cache import MARKET_SUMMARY_COLLECTION, MARKET_SUMMARY_ID, PARQUET_PATH  # noqa: E402
+from app.core.db import get_database
+from app.ml.market_summary import build_market_summary
+from app.utils.cache import MARKET_SUMMARY_COLLECTION, MARKET_SUMMARY_ID, PARQUET_PATH
 
 
 def top_turnover_symbols(n: int) -> list[str]:
@@ -34,7 +34,7 @@ async def main(n: int) -> None:
     symbols = top_turnover_symbols(n)
     print(f"Building market summary for top {len(symbols)} symbols by turnover...")
 
-    summary = build_market_summary(symbols)  # sync, CPU-heavy
+    summary = build_market_summary(symbols)
     summary["generated_at"] = datetime.now(timezone.utc).isoformat()
     summary["symbol_universe"] = {"selection": "top_turnover", "requested": n, "resolved": len(symbols)}
 

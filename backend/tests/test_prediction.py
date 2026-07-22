@@ -25,12 +25,11 @@ def test_train_xgboost_real_symbol():
     df = load_symbol("nabil")
     result = train_xgboost(df)
 
-    n = len(df) - 1  # trailing row dropped for NaN target
+    n = len(df) - 1
     split_idx = int(n * 0.8)
     expected_test_len = n - split_idx
     assert len(result["predictions"]) == len(result["actual"]) == len(result["dates"]) == expected_test_len
 
-    # dates must be the most recent 20% — never shuffled, time-ordered
     assert list(result["dates"]) == sorted(result["dates"]), "test set dates must stay in chronological order"
     assert result["dates"][0] == df["date"].iloc[split_idx].strftime("%Y-%m-%d")
 
@@ -60,7 +59,6 @@ def test_build_sequences_shape():
     assert X.shape[1] == lookback
     assert X.shape[0] == len(y) == len(dates)
 
-    # last window's target/date must match the last row's target/date directly
     assert y[-1] == data["target"].iloc[-1]
     assert dates[-1] == data["date"].iloc[-1]
 
@@ -101,7 +99,7 @@ def test_s_no_excluded_from_features():
 def _build_trending_series(n=300, seed=0):
     rng = np.random.default_rng(seed)
     dates = pd.bdate_range("2024-01-01", periods=n)
-    close = 100 + np.arange(n) * 0.3 + rng.normal(0, 0.05, n)  # steady uptrend, small noise
+    close = 100 + np.arange(n) * 0.3 + rng.normal(0, 0.05, n)
 
     df = pd.DataFrame({"date": dates, "symbol": "TREND", "close": close})
     df["log_return"] = np.log(df["close"] / df["close"].shift(1))
@@ -109,7 +107,7 @@ def _build_trending_series(n=300, seed=0):
     df["ma_10"] = df["close"].rolling(10).mean()
     df["lag_return_1"] = df["log_return"].shift(1)
     df["lag_return_2"] = df["log_return"].shift(2)
-    df["s_no"] = range(1, n + 1)  # should be excluded as a feature regardless
+    df["s_no"] = range(1, n + 1)
     return df.dropna().reset_index(drop=True)
 
 
@@ -159,7 +157,6 @@ def test_combine_model_comparison_returns_all_four():
     result = combine_model_comparison("nabil")
     assert result["ticker"] == "NABIL"
     assert set(result["models"]) == {"naive", "arima", "xgboost", "lstm"}
-    # naive/arima/xgboost always produce real metrics; lstm may carry an {"error": ...} if TF is absent
     for name in ("naive", "arima", "xgboost"):
         assert "metrics" in result["models"][name], name
     print("test_combine_model_comparison_returns_all_four passed")
@@ -170,11 +167,10 @@ def test_metrics_excludes_flat_days_from_directional_accuracy():
     direction to predict. np.sign(0) == 0 can never match a nonzero prediction, so counting
     them as automatic misses artificially deflates the metric -- they must be excluded."""
     actual = np.array([0.01, -0.01, 0.0, 0.0, 0.02])
-    predictions = np.array([0.005, -0.02, 0.5, -0.5, -0.01])  # last one wrong, rest "correct"
+    predictions = np.array([0.005, -0.02, 0.5, -0.5, -0.01])
 
     result = _metrics(actual, predictions)
 
-    # only the 3 nonzero-actual rows count: 2 correct (indices 0, 1), 1 wrong (index 4)
     expected = 200 / 3
     assert abs(result["directional_accuracy"] - expected) < 1e-9, result["directional_accuracy"]
     print("test_metrics_excludes_flat_days_from_directional_accuracy passed")

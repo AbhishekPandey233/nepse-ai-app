@@ -28,15 +28,15 @@ class FakeDB:
         return self._collections.setdefault(name, FakeCollection())
 
 
-import app.utils.cache as cache_module  # noqa: E402
+import app.utils.cache as cache_module
 
-_fake_db = FakeDB()  # single shared instance -- get_database() must keep returning the same one
-cache_module.get_database = lambda: _fake_db  # cache.py bound its own name at import time; patch it directly
+_fake_db = FakeDB()
+cache_module.get_database = lambda: _fake_db
 
-from fastapi.testclient import TestClient  # noqa: E402
+from fastapi.testclient import TestClient
 
-from app.main import app  # noqa: E402
-from app.routers import efficiency, explainability, history, prediction, volatility  # noqa: E402
+from app.main import app
+from app.routers import efficiency, explainability, history, prediction, volatility
 
 
 def _count_calls(module):

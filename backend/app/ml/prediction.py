@@ -26,9 +26,6 @@ def feature_cols(data: pd.DataFrame) -> list:
 def _metrics(actual, predictions) -> dict:
     actual, predictions = np.asarray(actual), np.asarray(predictions)
 
-    # flat/no-change days (actual == 0, common in thinly-traded NEPSE stocks) have no real
-    # direction to predict -- np.sign(0) == 0 can never match a nonzero prediction, which
-    # silently counted every flat day as wrong and deflated the metric. Exclude them.
     nonzero = actual != 0
     directional_accuracy = (
         float((np.sign(predictions[nonzero]) == np.sign(actual[nonzero])).mean() * 100) if nonzero.any() else 0.0
@@ -51,10 +48,10 @@ def _test_split(df: pd.DataFrame) -> tuple:
     """
     returns = df["log_return"].to_numpy(dtype=float)
     length = len(df)
-    n = length - 1  # with_target() drops the final row
+    n = length - 1
     split_idx = int(n * 0.8)
 
-    actuals = returns[split_idx + 1: length]  # next-day return for each test row
+    actuals = returns[split_idx + 1: length]
     dates = [d.strftime("%Y-%m-%d") for d in df["date"].iloc[split_idx: length - 1]]
     return returns, split_idx, actuals, dates
 
@@ -69,8 +66,8 @@ def predict_naive(df: pd.DataFrame) -> dict:
     returns, split_idx, actuals, dates = _test_split(df)
     length = len(df)
 
-    persistence = returns[split_idx: length - 1]  # predict next return = today's return
-    no_change = np.zeros_like(actuals)  # predict next return = 0
+    persistence = returns[split_idx: length - 1]
+    no_change = np.zeros_like(actuals)
 
     variants = {
         "persistence": _metrics(actuals, persistence),
@@ -106,13 +103,13 @@ def predict_arima(df: pd.DataFrame, order: tuple = (1, 0, 1)) -> dict:
     length = len(df)
 
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore")  # convergence/frequency chatter, not actionable here
+        warnings.simplefilter("ignore")
         res = ARIMA(returns[: split_idx + 1], order=order).fit()
         preds = []
         for k in range(split_idx, length - 1):
-            preds.append(float(res.forecast(1)[0]))  # predicts returns[k+1]
+            preds.append(float(res.forecast(1)[0]))
             if k < length - 2:
-                res = res.append([returns[k + 1]], refit=False)  # reveal actual, advance state
+                res = res.append([returns[k + 1]], refit=False)
 
     preds = np.asarray(preds)
     return {
@@ -139,8 +136,6 @@ def train_xgboost(df: pd.DataFrame) -> dict:
 
     predictions = model.predict(X_test)
 
-    # the row with_target() dropped (most recent day, target unknown) is exactly what a
-    # genuine forward-looking forecast needs to be computed from
     last_row = df.iloc[[-1]][cols]
     next_day_return = float(model.predict(last_row)[0])
 
@@ -162,8 +157,6 @@ def build_sequences(data: pd.DataFrame, lookback: int = 10) -> tuple:
     (samples, timesteps, features) array. Each window of rows [i-lookback+1 .. i]
     predicts the target sitting on row i (next-day log_return as of that day)."""
     cols = feature_cols(data)
-    # ponytail: some raw columns (conf, ltp, close_ltp...) are legitimately blank in the source
-    # CSVs on some days; XGBoost handles NaN natively but the LSTM can't, so impute here only.
     feature_df = data[cols].ffill().bfill().fillna(0)
     features = feature_df.to_numpy(dtype=float)
     targets = data["target"].to_numpy(dtype=float)
@@ -183,7 +176,7 @@ def train_lstm(df: pd.DataFrame, lookback: int = 10) -> dict:
     from tensorflow.keras.models import Sequential
 
     data = with_target(df)
-    split_idx = int(len(data) * 0.8)  # same split point/proportion as train_xgboost
+    split_idx = int(len(data) * 0.8)
     train_df = data.iloc[:split_idx].reset_index(drop=True)
     test_df = data.iloc[split_idx:].reset_index(drop=True)
 
@@ -191,7 +184,7 @@ def train_lstm(df: pd.DataFrame, lookback: int = 10) -> dict:
     X_test, y_test, test_dates = build_sequences(test_df, lookback)
 
     n_features = X_train.shape[2]
-    scaler = StandardScaler().fit(X_train.reshape(-1, n_features))  # fit on train only, avoid leakage
+    scaler = StandardScaler().fit(X_train.reshape(-1, n_features))
     X_train = scaler.transform(X_train.reshape(-1, n_features)).reshape(X_train.shape)
     X_test = scaler.transform(X_test.reshape(-1, n_features)).reshape(X_test.shape)
 
@@ -214,7 +207,7 @@ def train_lstm(df: pd.DataFrame, lookback: int = 10) -> dict:
 
 
 def _strip_model(result: dict) -> dict:
-    return {k: v for k, v in result.items() if k != "model"}  # model object isn't JSON/Mongo-serializable
+    return {k: v for k, v in result.items() if k != "model"}
 
 
 def combine_model_comparison(symbol: str) -> dict:
@@ -233,7 +226,7 @@ def combine_model_comparison(symbol: str) -> dict:
     }
     try:
         models["lstm"] = _strip_model(train_lstm(df))
-    except Exception as exc:  # noqa: BLE001 -- TF optional/slow; comparison is still useful without it
+    except Exception as exc:
         models["lstm"] = {"error": str(exc)}
 
     return {"ticker": symbol.upper(), "models": models}

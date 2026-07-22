@@ -32,14 +32,14 @@ class FakeDB:
 
 _fake_db = FakeDB()
 
-import app.routers.auth as auth_module  # noqa: E402
+import app.routers.auth as auth_module
 
-auth_module.get_database = lambda: _fake_db  # auth.py bound its own name at import time; patch it directly
+auth_module.get_database = lambda: _fake_db
 
-from fastapi.testclient import TestClient  # noqa: E402
+from fastapi.testclient import TestClient
 
-from app.core.security import create_access_token, decode_access_token, hash_password, verify_password  # noqa: E402
-from app.main import app  # noqa: E402
+from app.core.security import create_access_token, decode_access_token, hash_password, verify_password
+from app.main import app
 
 
 def test_password_hashing():

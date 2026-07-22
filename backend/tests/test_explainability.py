@@ -15,7 +15,6 @@ def test_explain_predictions_real_symbol():
     result = train_xgboost(df)
     model = result["model"]
 
-    # rebuild the same test-set feature frame train_xgboost used internally
     data = with_target(df)
     cols = get_feature_cols(data)
     split_idx = int(len(data) * 0.8)

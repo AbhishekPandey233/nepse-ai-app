@@ -53,25 +53,23 @@ class FakeDB:
 
 _fake_db = FakeDB()
 
-import app.utils.cache as cache_module  # noqa: E402
+import app.utils.cache as cache_module
 
-cache_module.get_database = lambda: _fake_db  # cache.py bound its own name at import time; patch it directly
+cache_module.get_database = lambda: _fake_db
 
-from fastapi.testclient import TestClient  # noqa: E402
+from fastapi.testclient import TestClient
 
-from app.main import app  # noqa: E402
-from app.routers import chat as chat_module  # noqa: E402
-from app.ml.llm_explainer import OllamaUnavailableError  # noqa: E402
-from app.routers.chat import _with_explicit_current_volatility  # noqa: E402
-from app.utils.cache import build_cache_key, get_all_cached_for_ticker  # noqa: E402
+from app.main import app
+from app.routers import chat as chat_module
+from app.ml.llm_explainer import OllamaUnavailableError
+from app.routers.chat import _with_explicit_current_volatility
+from app.utils.cache import build_cache_key, get_all_cached_for_ticker
 
 
 def test_with_explicit_current_volatility_injects_matching_value():
     results = {"volatility": {"conditional_volatility": [0.01, 0.011, 0.012, 0.0126]}}
     enriched = _with_explicit_current_volatility(results)
 
-    # must be the exact last element of the same array VolatilityPage.jsx reads for its
-    # "Current Risk Level" box -- not some independently recomputed or differently-sourced value
     assert enriched["current_conditional_volatility_garch"] == 0.0126
     assert enriched["volatility"]["conditional_volatility"] == results["volatility"]["conditional_volatility"]
     print("test_with_explicit_current_volatility_injects_matching_value passed")
@@ -119,16 +117,15 @@ def test_get_all_cached_for_ticker_merges_and_skips_non_context():
     docs = _fake_db["analysis_cache"].docs
     docs[f"efficiency:{suffix}"] = {"verdict": "eff"}
     docs[f"predict:{suffix}"] = {"metrics": {"rmse": 0.01}}
-    docs[f"backtest:{suffix}:0.5"] = {"verdict": "bt", "n_trades": 3}  # cost-suffixed key still matched
-    # these must NOT leak into chat context:
+    docs[f"backtest:{suffix}:0.5"] = {"verdict": "bt", "n_trades": 3}
     docs[f"sections:{suffix}"] = {"risk_analysis": {}}
-    docs[f"predict-compare:{suffix}"] = {"models": {}}  # 'predict' must not match 'predict-compare'
+    docs[f"predict-compare:{suffix}"] = {"models": {}}
 
     bundle = asyncio.run(get_all_cached_for_ticker("MULTI"))
 
     assert set(bundle) == {"efficiency", "predict", "backtest"}, bundle
     assert bundle["backtest"]["n_trades"] == 3
-    assert "_id" not in bundle["efficiency"]  # _id stripped like get_cached does
+    assert "_id" not in bundle["efficiency"]
     print("test_get_all_cached_for_ticker_merges_and_skips_non_context passed")
 
 
@@ -157,7 +154,6 @@ def test_happy_path_merges_cached_results_and_answers():
                 assert r.status_code == 200, r.text
                 assert isinstance(r.json()["answer"], str) and len(r.json()["answer"]) > 0
 
-            # regardless of whether Ollama answered, the merge + wiring must be correct
             assert set(captured["results"].keys()) == {"efficiency", "volatility"}
             assert captured["question"] == "Is this predictable?"
     finally:

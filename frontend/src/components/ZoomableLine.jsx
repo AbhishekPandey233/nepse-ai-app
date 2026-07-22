@@ -1,10 +1,6 @@
 import { useRef } from "react";
 import { Line } from "react-chartjs-2";
 
-// chartjs-plugin-zoom is registered globally in chartSetup.js. This wrapper merges wheel/pinch zoom
-// + drag panning (x-axis, matching the 2+-year daily time series) into whatever options a chart
-// already passes, and renders a "Reset zoom" button wired to the chart instance's resetZoom().
-// Tooltips are untouched -- the zoom plugin doesn't interfere with hover interaction.
 const ZOOM_CONFIG = {
   zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: "x" },
   pan: { enabled: true, mode: "x" },

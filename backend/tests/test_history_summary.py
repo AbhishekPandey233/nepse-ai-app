@@ -12,13 +12,11 @@ from app.ml.history_summary import summarize_history
 
 
 def _build_synthetic_history():
-    # first 20 rows are consumed by volatility_20's rolling(20) warmup + dropna, so any
-    # deliberate spikes/dips must sit safely past that point to survive into the final frame
     dates = pd.bdate_range("2024-01-01", periods=100)
     close = np.full(100, 100.0)
-    close[50] = 130.0  # deliberate spike -> highest close + biggest single-day gain
-    close[51] = 100.0  # and the reversal -> biggest single-day loss
-    close[30] = 80.0   # deliberate dip -> lowest close
+    close[50] = 130.0
+    close[51] = 100.0
+    close[30] = 80.0
 
     df = pd.DataFrame({"date": dates, "close": close})
     df["log_return"] = np.log(df["close"] / df["close"].shift(1))

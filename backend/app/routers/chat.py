@@ -41,9 +41,6 @@ def _with_explicit_current_volatility(results: dict) -> dict:
     if not volatility_result or not volatility_result.get("conditional_volatility"):
         return results
 
-    # same array + same index (last element) that VolatilityPage.jsx reads for its
-    # "Current Risk Level" box, so backend and frontend agree by construction as long as
-    # this value is actually sane
     current_volatility = volatility_result["conditional_volatility"][-1]
 
     assert isinstance(current_volatility, (int, float)) and current_volatility >= 0, (
@@ -69,8 +66,6 @@ class ChatResponse(BaseModel):
 
 @router.post("/api/explain-chat", response_model=ChatResponse)
 async def explain_chat(payload: ChatRequest):
-    # full cross-module bundle (efficiency, volatility, prediction, SHAP, history, backtest -- whichever
-    # exist) so a question asked on any page can still reference every other module's real numbers
     results = await get_all_cached_for_ticker(payload.ticker)
 
     if not results:

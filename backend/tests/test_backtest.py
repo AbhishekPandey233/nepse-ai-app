@@ -4,9 +4,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import numpy as np  # noqa: E402
+import numpy as np
 
-from app.ml.backtest import run_backtest  # noqa: E402
+from app.ml.backtest import run_backtest
 
 
 def test_zero_cost_always_long_equals_buy_and_hold():
@@ -15,8 +15,8 @@ def test_zero_cost_always_long_equals_buy_and_hold():
     r = run_backtest(None, predictions, transaction_cost_pct=0.0)
 
     assert abs(r["strategy_total_return"] - r["buy_hold_total_return"]) < 1e-12
-    assert r["n_trades"] == 1  # single entry from flat -> long on day 1
-    assert r["outperformed"] is False  # equal is not "outperformed"
+    assert r["n_trades"] == 1
+    assert r["outperformed"] is False
     print("test_zero_cost_always_long_equals_buy_and_hold passed")
 
 
@@ -24,7 +24,6 @@ def test_costs_drag_always_long_below_buy_and_hold():
     predictions = {"predictions": [1.0, 1.0, 1.0], "actual": [0.01, -0.02, 0.03], "dates": ["d1", "d2", "d3"]}
     r = run_backtest(None, predictions, transaction_cost_pct=0.5)
 
-    # one entry cost of 0.5% is deducted, so the strategy must trail buy-and-hold by ~that amount
     assert r["strategy_total_return"] < r["buy_hold_total_return"]
     assert r["n_trades"] == 1
     assert "did not outperform" in r["verdict"]
@@ -34,7 +33,7 @@ def test_costs_drag_always_long_below_buy_and_hold():
 def test_perfect_signal_beats_buy_and_hold():
     """Long only on up-days, flat on down-days: must beat buy-and-hold, which eats the down-days."""
     actual = [0.02, -0.01, 0.03, -0.02]
-    predicted = [1.0, -1.0, 1.0, -1.0]  # sign matches actual -> long on the two up-days only
+    predicted = [1.0, -1.0, 1.0, -1.0]
     predictions = {"predictions": predicted, "actual": actual, "dates": ["d1", "d2", "d3", "d4"]}
     r = run_backtest(None, predictions, transaction_cost_pct=0.1)
 
@@ -42,7 +41,6 @@ def test_perfect_signal_beats_buy_and_hold():
     assert r["outperformed"] is True
     assert "outperformed" in r["verdict"]
 
-    # buy-and-hold cumulative must equal the compounded market return exactly
     market = np.exp(np.asarray(actual)) - 1.0
     expected_bh = float(np.cumprod(1 + market)[-1] - 1)
     assert abs(r["buy_hold_total_return"] - expected_bh) < 1e-12

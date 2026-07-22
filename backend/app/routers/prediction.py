@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 def _strip_model(result: dict) -> dict:
-    return {k: v for k, v in result.items() if k != "model"}  # model object isn't JSON/Mongo-serializable
+    return {k: v for k, v in result.items() if k != "model"}
 
 
 def _compute(ticker: str) -> dict:

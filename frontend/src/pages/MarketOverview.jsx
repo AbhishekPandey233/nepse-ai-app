@@ -7,12 +7,11 @@ import ErrorRetry from "../components/ErrorRetry.jsx";
 import LoadingSkeleton from "../components/LoadingSkeleton.jsx";
 import { themeColor } from "../theme.js";
 
-// bin a list of values into `bins` equal-width buckets -> {labels, counts} for a histogram
 function histogram(values, bins = 8) {
   if (values.length === 0) return { labels: [], counts: [] };
   const min = Math.min(...values);
   const max = Math.max(...values);
-  const width = (max - min) / bins || 1; // guard against all-equal values
+  const width = (max - min) / bins || 1;
   const counts = new Array(bins).fill(0);
   for (const v of values) {
     const idx = Math.min(bins - 1, Math.floor((v - min) / width));
