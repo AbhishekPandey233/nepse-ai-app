@@ -37,8 +37,6 @@ def _analyze_symbol(symbol: str) -> dict:
     returns = df["log_return"]
 
     eff = run_efficiency_tests(returns)
-    # same rule run_efficiency_tests uses to build its verdict string -- derived here so the boolean
-    # and the verdict can never disagree
     against_efficiency = eff["ljung_box"]["p_value"] < 0.05 or eff["variance_ratio"]["p_value"] < 0.05
 
     garch = fit_garch(returns)
@@ -65,7 +63,7 @@ def build_market_summary(symbols: list[str]) -> dict:
     for symbol in symbols:
         try:
             per_symbol.append(_analyze_symbol(symbol))
-        except Exception as exc:  # noqa: BLE001 -- insufficient data / GARCH non-convergence etc.; skip and move on
+        except Exception as exc:
             logger.warning("market_summary: skipped %s (%s)", symbol, exc)
             skipped.append({"symbol": symbol.upper(), "reason": str(exc)})
 
@@ -85,9 +83,6 @@ def build_market_summary(symbols: list[str]) -> dict:
     }
 
 
-# ── rolling-window "impact" link: does the model predict better when the market is less efficient
-#    or differently volatile? Ties the prediction, efficiency, and volatility modules into one
-#    computed relationship (a correlation), instead of three outputs sitting side by side. ─────────
 
 
 def _pearson(x: list, y: list) -> float | None:
@@ -112,7 +107,7 @@ def rolling_efficiency_vs_accuracy(df: pd.DataFrame, window: int = 60) -> dict:
     (far too slow to do hundreds of times). Answers RQ1/RQ2: do less-efficient / differently-
     volatile regimes coincide with the model predicting better or worse?
     """
-    from app.ml.prediction import _test_split, train_xgboost  # local: heavy ML deps, keep import lazy
+    from app.ml.prediction import _test_split, train_xgboost
 
     pred_out = train_xgboost(df)
     predicted = np.asarray(pred_out["predictions"], dtype=float)
@@ -120,7 +115,7 @@ def rolling_efficiency_vs_accuracy(df: pd.DataFrame, window: int = 60) -> dict:
     test_dates = pred_out["dates"]
     n_test = len(actual)
 
-    returns_arr, split_idx, _, _ = _test_split(df)  # split_idx maps test index -> parquet row
+    returns_arr, split_idx, _, _ = _test_split(df)
 
     empty = {
         "window": window,
@@ -133,7 +128,7 @@ def rolling_efficiency_vs_accuracy(df: pd.DataFrame, window: int = 60) -> dict:
         return empty
 
     correct = np.sign(predicted) == np.sign(actual)
-    valid = actual != 0  # flat days have no direction to score (see _metrics)
+    valid = actual != 0
 
     dates_out, acc_out, vr_out, ineff_out, vol_out = [], [], [], [], []
     for j in range(window - 1, n_test):

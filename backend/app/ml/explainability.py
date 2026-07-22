@@ -16,9 +16,6 @@ def explain_predictions(model, X: pd.DataFrame) -> dict:
         for row in shap_values
     ]
 
-    # SHAP's core guarantee: base_value + sum(shap_values for a row) == the model's raw
-    # prediction for that row. Verify it holds so a future slicing/aggregation/unit-conversion
-    # bug in this function would fail loudly here instead of silently reaching the frontend.
     predictions = model.predict(X)
     reconstructed = base_value + shap_values.sum(axis=1)
     max_diff = float(np.abs(predictions - reconstructed).max())

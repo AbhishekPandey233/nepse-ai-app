@@ -29,10 +29,10 @@ def run_backtest(df, predictions: dict, transaction_cost_pct: float = 0.5) -> di
             "transaction_cost_pct": transaction_cost_pct, "verdict": "No test-period data to backtest.",
         }
 
-    market_ret = np.exp(actual_log) - 1.0          # realized simple daily return of the stock
-    position = (predicted > 0).astype(int)          # 1 = long that day, 0 = flat (cash)
+    market_ret = np.exp(actual_log) - 1.0
+    position = (predicted > 0).astype(int)
 
-    prev = np.concatenate([[0], position[:-1]])     # assume flat before the first test day
+    prev = np.concatenate([[0], position[:-1]])
     changed = position != prev
     tc = transaction_cost_pct / 100.0
 

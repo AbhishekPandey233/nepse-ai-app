@@ -6,7 +6,8 @@ import pandas as pd
 
 HISTORY_PATH = Path(__file__).resolve().parents[2] / "data" / "processed" / "nepse_history.parquet"
 
-_history_df: pd.DataFrame | None = None  # module-level cache, populated on first load
+_history_df: pd.DataFrame | None = None
+_history_mtime: float | None = None
 
 ENGINEERED_COLS = [
     "log_return", "ma_5", "ma_10", "ma_20", "rsi_14",
@@ -15,9 +16,14 @@ ENGINEERED_COLS = [
 
 
 def _load_history() -> pd.DataFrame:
-    global _history_df
-    if _history_df is None:
+    """Cached read of the parquet, auto-reloaded when the file changes on disk, so a rebuilt dataset
+    is picked up by a running server without a restart. A stat() per call is negligible next to the
+    analysis work it feeds."""
+    global _history_df, _history_mtime
+    mtime = HISTORY_PATH.stat().st_mtime
+    if _history_df is None or mtime != _history_mtime:
         _history_df = pd.read_parquet(HISTORY_PATH)
+        _history_mtime = mtime
     return _history_df
 
 
@@ -27,6 +33,16 @@ def _rsi(close: pd.Series, period: int = 14) -> pd.Series:
     avg_loss = -delta.clip(upper=0).rolling(period).mean()
     rs = avg_gain / avg_loss
     return 100 - (100 / (1 + rs))
+
+
+def latest_close(symbol: str) -> float | None:
+    """Most recent close price for a symbol, or None if the symbol isn't in the dataset. Cheap
+    (no feature engineering) -- used for portfolio mark-to-market."""
+    history = _load_history()
+    rows = history[history["symbol"].str.upper() == symbol.upper()]
+    if rows.empty:
+        return None
+    return float(rows.sort_values("date")["close"].iloc[-1])
 
 
 def load_symbol(symbol: str) -> pd.DataFrame:
@@ -45,7 +61,6 @@ def load_symbol(symbol: str) -> pd.DataFrame:
     df["lag_return_1"] = df["log_return"].shift(1)
     df["lag_return_2"] = df["log_return"].shift(2)
     df["lag_return_3"] = df["log_return"].shift(3)
-    # vwap, 120_days, 180_days, 52_weeks_high, 52_weeks_low already present from ingest.py
 
     df = df.dropna(subset=ENGINEERED_COLS).reset_index(drop=True)
 

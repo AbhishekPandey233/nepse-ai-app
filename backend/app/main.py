@@ -5,7 +5,17 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.db import client
-from app.routers import auth, chat, efficiency, explainability, history, market, prediction, volatility
+from app.routers import (
+    auth,
+    chat,
+    efficiency,
+    explainability,
+    history,
+    market,
+    portfolio,
+    prediction,
+    volatility,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("nepse-ai")
@@ -14,7 +24,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Vite dev server
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -27,6 +37,7 @@ app.include_router(prediction.router)
 app.include_router(explainability.router)
 app.include_router(history.router)
 app.include_router(market.router)
+app.include_router(portfolio.router)
 app.include_router(chat.router)
 
 

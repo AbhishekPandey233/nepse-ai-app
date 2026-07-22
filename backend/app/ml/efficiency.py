@@ -19,7 +19,7 @@ def _variance_ratio_test(returns: pd.Series, k: int = 2) -> dict:
     var_1 = np.sum((r - mu) ** 2) / (nq - 1)
 
     m = k * (nq - k + 1) * (1 - k / nq)
-    overlapping_sums = np.convolve(r, np.ones(k), mode="valid")  # k-period overlapping sums
+    overlapping_sums = np.convolve(r, np.ones(k), mode="valid")
     var_k = np.sum((overlapping_sums - k * mu) ** 2) / m
 
     vr = var_k / var_1

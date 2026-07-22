@@ -8,8 +8,8 @@ import pandas as pd
 RAW_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
 OUT_PATH = Path(__file__).resolve().parents[2] / "data" / "processed" / "nepse_history.parquet"
 
-FILENAME_DATE_RE = re.compile(r"(\d{4}-\d{2}-\d{2})")
-DEBENTURE_RE = re.compile(r"[A-Za-z]\d+$")  # e.g. ADBLD83 -> trailing "D83"
+FILENAME_DATE_RE = re.compile(r"(\d{4})[-_](\d{2})[-_](\d{2})")
+DEBENTURE_RE = re.compile(r"[A-Za-z]\d+$")
 
 
 def _normalize_col(col: str) -> str:
@@ -39,7 +39,7 @@ def read_daily_csv(path: Path) -> pd.DataFrame:
     df = df.dropna(how="all")
     df = df[df["symbol"].notna()]
     df["s_no"] = pd.to_numeric(df["s_no"], errors="coerce")
-    df = df[df["s_no"].notna()]  # drops footer/disclaimer rows with no serial number
+    df = df[df["s_no"].notna()]
 
     for col in df.columns:
         if col not in ("symbol", "s_no"):
@@ -51,7 +51,7 @@ def read_daily_csv(path: Path) -> pd.DataFrame:
     date_match = FILENAME_DATE_RE.search(path.stem)
     if not date_match:
         raise ValueError(f"Could not extract a YYYY-MM-DD date from filename {path.name}")
-    df["date"] = pd.to_datetime(date_match.group(1))
+    df["date"] = pd.to_datetime("-".join(date_match.groups()))
 
     return df
 
